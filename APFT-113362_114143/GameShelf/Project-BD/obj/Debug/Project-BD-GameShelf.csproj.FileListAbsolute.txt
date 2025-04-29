@@ -1,0 +1,10 @@
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.AssemblyReference.cache
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.MenuLogin.resources
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.GenerateResource.cache
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\bin\Debug\Project-BD.exe.config
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\bin\Debug\Project-BD.exe
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\bin\Debug\Project-BD.pdb
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.Properties.Resources.resources
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.CoreCompileInputs.cache
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.exe
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.pdb
