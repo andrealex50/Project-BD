@@ -105,49 +105,65 @@ namespace Project_BD
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (!verifySGBDConnection())
-                return;
-
-            string email = textBox2.Text.Trim();
-            string password = textBox1.Text.Trim();
-
-            if (email == "" || password == "")
+            try
             {
-                MessageBox.Show("Por favor, preencha todos os campos.");
-                return;
+                if (!verifySGBDConnection())
+                {
+                    MessageBox.Show("Erro na conexão com a base de dados.");
+                    return;
+                }
+
+                string email = textBox2.Text.Trim();
+                string password = textBox1.Text.Trim();
+
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                {
+                    MessageBox.Show("Por favor, preencha todos os campos.");
+                    return;
+                }
+
+                // Hash da password em SHA256 (hexadecimal, tal como na base de dados)
+                string hashedPassword = ComputeSha256Hash(password);
+
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT id_utilizador, nome FROM projeto.utilizador WHERE email = @Email AND password = @Password", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Email", email);
+                    cmd.Parameters.AddWithValue("@Password", hashedPassword);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string userId = reader["id_utilizador"].ToString();
+                            string nome = reader["nome"].ToString();
+
+                            // Fecha o reader antes de abrir o novo formulário
+                            reader.Close();
+
+                            // Esconde o formulário de login
+                            this.Hide();
+
+                            // Cria e mostra a MainPage
+                            MainPage mainPage = new MainPage(userId);
+                            mainPage.Closed += (s, args) => this.Close(); // Fecha a aplicação quando a MainPage fechar
+                            mainPage.Show();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Email ou password incorretos.");
+                        }
+                    }
+                }
             }
-
-            // Hash da password em SHA256 (hexadecimal, tal como na base de dados)
-            string hashedPassword = ComputeSha256Hash(password);
-
-            SqlCommand cmd = new SqlCommand(
-                "SELECT * FROM projeto.utilizador WHERE email = @Email AND password = @Password", cn);
-            cmd.Parameters.AddWithValue("@Email", email);
-            cmd.Parameters.AddWithValue("@Password", hashedPassword);
-
-            SqlDataReader reader = cmd.ExecuteReader();
-
-            if (reader.Read())
+            catch (Exception ex)
             {
-                string nome = reader["nome"].ToString();
-                MessageBox.Show($"Bem-vindo, {nome}");
+                MessageBox.Show($"Erro durante o login: {ex.Message}");
             }
-            else
+            finally
             {
-                MessageBox.Show("Email ou password incorretos.");
+                cn.Close();
             }
-
-            reader.Close();
-        }
-
-        private void textBox2_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
         }
 
         private string ComputeSha256Hash(string rawData)
