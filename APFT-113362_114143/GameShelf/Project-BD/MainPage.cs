@@ -16,6 +16,10 @@ namespace Project_BD
         private string currentUserId; // Store the logged-in user's ID
         private SqlConnection cn;
         public static ConnectionBD bdconnect = new ConnectionBD();
+        private string currentGenreFilter = null;
+        private string currentPlatformFilter = null;
+        private int currentMinRating = 0;
+
 
         public MainPage(String userId)
         {
@@ -95,8 +99,14 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = "SELECT id_jogo, titulo, capa, rating_medio FROM projeto.jogo";
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_SearchGames", cn);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.AddWithValue("@searchText", DBNull.Value);
+                command.Parameters.AddWithValue("@genre", DBNull.Value);
+                command.Parameters.AddWithValue("@platform", DBNull.Value);
+                command.Parameters.AddWithValue("@minRating", 0);
+
                 SqlDataReader reader = command.ExecuteReader();
 
                 listView1.Items.Clear();
@@ -105,24 +115,12 @@ namespace Project_BD
                 listView1.Columns.Add("ID", 0);
                 listView1.Columns.Add("Title", 200);
                 listView1.Columns.Add("Rating", 60);
-                listView1.Columns.Add("Cover", 100);
 
                 while (reader.Read())
                 {
                     ListViewItem item = new ListViewItem(reader["id_jogo"].ToString());
                     item.SubItems.Add(reader["titulo"].ToString());
                     item.SubItems.Add(reader["rating_medio"].ToString());
-
-                    // Handle cover image
-                    if (reader["capa"] != DBNull.Value)
-                    {
-                        string imagePath = reader["capa"].ToString();
-                        if (System.IO.File.Exists(imagePath))
-                        {
-                            item.ImageKey = imagePath;
-                        }
-                    }
-
                     listView1.Items.Add(item);
                 }
                 reader.Close();
@@ -139,47 +137,7 @@ namespace Project_BD
 
         private void LoadUserLists()
         {
-            try
-            {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
-
-                // Primeiro carrega as listas dos Mods (Administradores)
-                string query = @"SELECT l.id_lista, l.titulo_lista, u.nome AS criador
-                        FROM projeto.lista l
-                        JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
-                        WHERE u.nome = 'admin'
-                        ORDER BY l.titulo_lista";
-
-                SqlCommand command = new SqlCommand(query, cn);
-                SqlDataReader reader = command.ExecuteReader();
-
-                // Configurar a ListView
-                listView2.Items.Clear();
-                listView2.View = View.Details;
-                listView2.Columns.Clear();
-                listView2.Columns.Add("ID", 0); // Coluna oculta
-                listView2.Columns.Add("Título", 180);
-                listView2.Columns.Add("Criador", 120);
-
-                while (reader.Read())
-                {
-                    ListViewItem item = new ListViewItem(reader["id_lista"].ToString());
-                    item.SubItems.Add(reader["titulo_lista"].ToString());
-                    item.SubItems.Add(reader["criador"].ToString());
-                    listView2.Items.Add(item);
-                }
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Erro ao carregar listas: " + ex.Message);
-            }
-            finally
-            {
-                cn.Close();
-            }
+            ApplyListFilters();
         }
 
         private void LoadFriends()
@@ -190,11 +148,12 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = "SELECT u.id_utilizador, u.nome FROM projeto.utilizador u " +
-                              "INNER JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido " +
-                              "WHERE s.id_utilizador_seguidor = @userId";
+                string query = @"SELECT u.id_utilizador, u.nome 
+                              FROM projeto.utilizador u
+                              WHERE projeto.fn_IsFriend(@currentUserId, u.id_utilizador) = 1";
+
                 SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@userId", currentUserId);
+                command.Parameters.AddWithValue("@currentUserId", currentUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
 
@@ -258,12 +217,10 @@ namespace Project_BD
         // Botão para abrir pop-up filtros dos jogos
         private void button1_Click_1(object sender, EventArgs e)
         {
-            // Create a new form for filters
             Form filtersForm = new Form();
             filtersForm.Text = "Filtrar Jogos";
             filtersForm.Size = new Size(300, 400);
 
-            // Add filter controls
             Label genreLabel = new Label() { Text = "Gênero:", Left = 20, Top = 20 };
             ComboBox genreComboBox = new ComboBox() { Left = 20, Top = 50, Width = 200 };
 
@@ -275,7 +232,6 @@ namespace Project_BD
 
             Button applyButton = new Button() { Text = "Aplicar Filtros", Left = 20, Top = 250, Width = 100 };
 
-            // Populate combo boxes from database
             try
             {
                 cn = getSGBDConnection();
@@ -315,11 +271,11 @@ namespace Project_BD
 
             // Apply filters button click
             applyButton.Click += (s, args) => {
-                string genreFilter = genreComboBox.SelectedIndex > 0 ? genreComboBox.SelectedItem.ToString() : null;
-                string platformFilter = platformComboBox.SelectedIndex > 0 ? platformComboBox.SelectedItem.ToString() : null;
-                int minRating = (int)ratingNumeric.Value;
+                currentGenreFilter = genreComboBox.SelectedIndex > 0 ? genreComboBox.SelectedItem.ToString() : null;
+                currentPlatformFilter = platformComboBox.SelectedIndex > 0 ? platformComboBox.SelectedItem.ToString() : null;
+                currentMinRating = (int)ratingNumeric.Value;
 
-                FilterGames(genreFilter, platformFilter, minRating);
+                FilterGames(textBox1.Text.Trim(), currentGenreFilter, currentPlatformFilter, currentMinRating);
                 filtersForm.Close();
             };
 
@@ -335,7 +291,7 @@ namespace Project_BD
             filtersForm.ShowDialog();
         }
 
-        private void FilterGames(string genre, string platform, int minRating)
+        private void FilterGames(string searchText, string genre, string platform, int minRating)
         {
             try
             {
@@ -343,39 +299,17 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT j.id_jogo, j.titulo, j.capa, j.rating_medio 
-                        FROM projeto.jogo j";
+                SqlCommand command = new SqlCommand("projeto.sp_SearchGames", cn);
+                command.CommandType = CommandType.StoredProcedure;
 
-                List<string> conditions = new List<string>();
-                List<SqlParameter> parameters = new List<SqlParameter>();
-
-                if (!string.IsNullOrEmpty(genre))
-                {
-                    query += " JOIN projeto.genero g ON j.id_jogo = g.id_jogo";
-                    conditions.Add("g.nome = @genre");
-                    parameters.Add(new SqlParameter("@genre", genre));
-                }
-
-                if (!string.IsNullOrEmpty(platform))
-                {
-                    query += " JOIN projeto.plataforma p ON j.id_jogo = p.id_jogo";
-                    conditions.Add("p.sigla = @platform");
-                    parameters.Add(new SqlParameter("@platform", platform));
-                }
-
-                if (minRating > 0)
-                {
-                    conditions.Add("j.rating_medio >= @minRating");
-                    parameters.Add(new SqlParameter("@minRating", minRating));
-                }
-
-                if (conditions.Count > 0)
-                {
-                    query += " WHERE " + string.Join(" AND ", conditions);
-                }
-
-                SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddRange(parameters.ToArray());
+                command.Parameters.AddWithValue("@searchText",
+                    string.IsNullOrWhiteSpace(searchText) || searchText == "Search for game..." ?
+                    (object)DBNull.Value : searchText);
+                command.Parameters.AddWithValue("@genre",
+                    string.IsNullOrEmpty(genre) ? (object)DBNull.Value : genre);
+                command.Parameters.AddWithValue("@platform",
+                    string.IsNullOrEmpty(platform) ? (object)DBNull.Value : platform);
+                command.Parameters.AddWithValue("@minRating", minRating);
 
                 SqlDataReader reader = command.ExecuteReader();
 
@@ -385,16 +319,6 @@ namespace Project_BD
                     ListViewItem item = new ListViewItem(reader["id_jogo"].ToString());
                     item.SubItems.Add(reader["titulo"].ToString());
                     item.SubItems.Add(reader["rating_medio"].ToString());
-
-                    if (reader["capa"] != DBNull.Value)
-                    {
-                        string imagePath = reader["capa"].ToString();
-                        if (System.IO.File.Exists(imagePath))
-                        {
-                            item.ImageKey = imagePath;
-                        }
-                    }
-
                     listView1.Items.Add(item);
                 }
                 reader.Close();
@@ -413,20 +337,21 @@ namespace Project_BD
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
             string searchText = textBox2.Text.Trim();
-    
+
             try
             {
                 cn = getSGBDConnection();
                 if (!verifySGBDConnection())
                     return;
 
+                // Usando a UDF fn_IsFriend na pesquisa
                 string query = @"SELECT u.id_utilizador, u.nome 
-                                FROM projeto.utilizador u
-                                INNER JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
-                                WHERE s.id_utilizador_seguidor = @userId AND u.nome LIKE @searchText";
-        
+                              FROM projeto.utilizador u
+                              WHERE projeto.fn_IsFriend(@currentUserId, u.id_utilizador) = 1
+                              AND u.nome LIKE @searchText";
+
                 SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@userId", currentUserId);
+                command.Parameters.AddWithValue("@currentUserId", currentUserId);
                 command.Parameters.AddWithValue("@searchText", "%" + searchText + "%");
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -453,52 +378,8 @@ namespace Project_BD
         // Pesquisar por jogo
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-
             string searchText = textBox1.Text.Trim();
-
-            try
-            {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
-
-                string query = @"SELECT id_jogo, titulo, capa, rating_medio 
-                        FROM projeto.jogo
-                        WHERE titulo LIKE @searchText";
-
-                SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@searchText", "%" + searchText + "%");
-
-                SqlDataReader reader = command.ExecuteReader();
-
-                listView1.Items.Clear();
-                while (reader.Read())
-                {
-                    ListViewItem item = new ListViewItem(reader["id_jogo"].ToString());
-                    item.SubItems.Add(reader["titulo"].ToString());
-                    item.SubItems.Add(reader["rating_medio"].ToString());
-
-                    if (reader["capa"] != DBNull.Value)
-                    {
-                        string imagePath = reader["capa"].ToString();
-                        if (System.IO.File.Exists(imagePath))
-                        {
-                            item.ImageKey = imagePath;
-                        }
-                    }
-
-                    listView1.Items.Add(item);
-                }
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Erro ao pesquisar jogos: " + ex.Message);
-            }
-            finally
-            {
-                cn.Close();
-            }
+            FilterGames(searchText, currentGenreFilter, currentPlatformFilter, currentMinRating);
         }
 
         // Mostrar as listas
@@ -507,16 +388,62 @@ namespace Project_BD
 
         }
 
+        private void ApplyListFilters()
+        {
+            string searchText = textBox4.Text.Trim();
+            string selectedFilter = comboBox1.SelectedItem?.ToString();
+
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                SqlCommand command = new SqlCommand("projeto.sp_SearchLists", cn);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.AddWithValue("@currentUserId", currentUserId);
+                command.Parameters.AddWithValue("@searchText", string.IsNullOrEmpty(searchText) ? (object)DBNull.Value : searchText);
+                command.Parameters.AddWithValue("@filterType", selectedFilter ?? "All");
+
+                SqlDataReader reader = command.ExecuteReader();
+
+                listView2.Items.Clear();
+                listView2.View = View.Details;
+                listView2.Columns.Clear();
+                listView2.Columns.Add("ID", 0);
+                listView2.Columns.Add("Título", 180);
+                listView2.Columns.Add("Criador", 120);
+
+                while (reader.Read())
+                {
+                    ListViewItem item = new ListViewItem(reader["id_lista"].ToString());
+                    item.SubItems.Add(reader["titulo_lista"].ToString());
+                    item.SubItems.Add(reader["criador"].ToString());
+                    listView2.Items.Add(item);
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao filtrar listas: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
         // Pesquisar por lista
         private void textBox4_TextChanged(object sender, EventArgs e)
         {
-
+            ApplyListFilters();
         }
 
         // Filtrar listas
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            ApplyListFilters();
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
@@ -527,7 +454,48 @@ namespace Project_BD
         // Pesquisar por utilizador
         private void textBox3_TextChanged(object sender, EventArgs e)
         {
+            string searchText = textBox3.Text.Trim();
 
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                string query = @"SELECT u.id_utilizador, u.nome, p.foto 
+                        FROM projeto.utilizador u
+                        LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
+                        WHERE u.nome LIKE @searchText AND u.id_utilizador != @currentUserId";
+
+                SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@searchText", "%" + searchText + "%");
+                command.Parameters.AddWithValue("@currentUserId", currentUserId);
+
+                SqlDataReader reader = command.ExecuteReader();
+
+                listView4.Items.Clear();
+                listView4.View = View.Details;
+                listView4.Columns.Clear();
+                listView4.Columns.Add("ID", 0); 
+                listView4.Columns.Add("Name", 200);
+
+                while (reader.Read())
+                {
+                    ListViewItem item = new ListViewItem(reader["id_utilizador"].ToString());
+                    item.SubItems.Add(reader["nome"].ToString());
+
+                    listView4.Items.Add(item);
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao pesquisar utilizadores: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
         }
 
         // Mostra utilizadores conforme a pesquisa
@@ -558,6 +526,62 @@ namespace Project_BD
                 textBox1.Text = "Search for game...";
                 textBox1.ForeColor = SystemColors.GrayText;
             }
+        }
+
+        private void textBox1_Enter_1(object sender, EventArgs e)
+        {
+            if (textBox1.Text == "Search for game...")
+            {
+                textBox1.Text = "";
+                textBox1.ForeColor = SystemColors.WindowText; 
+            }
+        }
+
+        private void textBox1_Leave_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox2_Enter(object sender, EventArgs e)
+        {
+            if (textBox2.Text == "Search for friend...")
+            {
+                textBox2.Text = "";
+                textBox2.ForeColor = SystemColors.WindowText; 
+            }
+        }
+
+        private void textBox2_Leave(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox3_Enter(object sender, EventArgs e)
+        {
+            if (textBox3.Text == "Search for user...")
+            {
+                textBox3.Text = "";
+                textBox3.ForeColor = SystemColors.WindowText;
+            }
+        }
+
+        private void textBox3_Leave(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox4_Enter(object sender, EventArgs e)
+        {
+            if (textBox4.Text == "Search for list...")
+            {
+                textBox4.Text = "";
+                textBox4.ForeColor = SystemColors.WindowText;
+            }
+        }
+
+        private void textBox4_Leave(object sender, EventArgs e)
+        {
+
         }
     }
 }
