@@ -496,7 +496,7 @@ namespace Project_BD
         private void button1_Click(object sender, EventArgs e)
         {
             // Assuming you have a ListForm for creating/editing lists
-            Lista listForm = new Lista(currentUserId, null);
+            Lista listForm = new Lista(currentUserId, null, null, null);
             listForm.ShowDialog();
             LoadUserLists(); // Refresh lists after creating a new one
         }
