@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
@@ -11,6 +10,7 @@ namespace Project_BD
     {
         private string currentUserId;
         private string gameId;
+        private string reviewId;
         private SqlConnection cn;
         public static ConnectionBD bdconnect = new ConnectionBD();
 
@@ -37,6 +37,41 @@ namespace Project_BD
                 cn.Open();
 
             return cn.State == ConnectionState.Open;
+        }
+
+        private string GenerateReviewId()
+        {
+            try
+            {
+                using (var tempCn = getSGBDConnection())
+                {
+                    tempCn.Open();
+
+                    // Get the maximum existing review ID
+                    string query = "SELECT MAX(id_review) FROM projeto.review";
+                    SqlCommand cmd = new SqlCommand(query, tempCn);
+                    object result = cmd.ExecuteScalar();
+
+                    if (result == DBNull.Value || result == null)
+                    {
+                        return "R001"; // First review
+                    }
+
+                    string maxId = result.ToString();
+                    if (maxId.StartsWith("R") && int.TryParse(maxId.Substring(1), out int number))
+                    {
+                        return $"R{(number + 1):D3}"; // Increment and format
+                    }
+
+                    // Fallback if ID format is unexpected
+                    return "R" + Guid.NewGuid().ToString("N").Substring(0, 3);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error generating review ID: " + ex.Message);
+                return "R" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback
+            }
         }
 
         private void LoadGameInfo()
@@ -75,7 +110,7 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT horas_jogadas, rating, descricao_review 
+                string query = @"SELECT id_review, horas_jogadas, rating, descricao_review 
                                FROM projeto.review 
                                WHERE id_utilizador = @userId AND id_jogo = @gameId";
 
@@ -86,6 +121,7 @@ namespace Project_BD
                 SqlDataReader reader = command.ExecuteReader();
                 if (reader.Read())
                 {
+                    reviewId = reader["id_review"].ToString();
                     numHoursPlayed.Value = Convert.ToDecimal(reader["horas_jogadas"]);
                     numRating.Value = Convert.ToDecimal(reader["rating"]);
                     txtReview.Text = reader["descricao_review"].ToString();
@@ -124,9 +160,6 @@ namespace Project_BD
                 checkCmd.Parameters.AddWithValue("@gameId", gameId);
                 int reviewCount = Convert.ToInt32(checkCmd.ExecuteScalar());
 
-                // Generate the unique ID if needed for a new review
-                string id_review_ = GenerateUniqueID();
-
                 string query;
                 if (reviewCount > 0)
                 {
@@ -144,10 +177,14 @@ namespace Project_BD
                              data_review, id_utilizador, id_jogo)
                             VALUES 
                             (@id_review, @hours, @rating, @review, GETDATE(), @userId, @gameId)";
+                    reviewId = GenerateReviewId();
                 }
 
                 SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@id_review", id_review_);
+                if (reviewCount == 0)
+                {
+                    command.Parameters.AddWithValue("@id_review", reviewId);
+                }
                 command.Parameters.AddWithValue("@hours", numHoursPlayed.Value);
                 command.Parameters.AddWithValue("@rating", numRating.Value);
                 command.Parameters.AddWithValue("@review", txtReview.Text);
@@ -213,44 +250,19 @@ namespace Project_BD
         {
             this.Close();
         }
-        // Go back to MainPage.cs
+
         private void pictureBox3_Click(object sender, EventArgs e)
         {
             this.Close();
-            MainPage mainPageForm = new MainPage(currentUserId);
-            mainPageForm.Show();
+            GamePage gamePage = new GamePage(currentUserId, gameId);
+            gamePage.Show();
         }
-        // Go to Own UserPage.cs
+
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-            this.Close();
-            UserPage userPageForm = new UserPage(currentUserId, currentUserId);
-            userPageForm.Show();
-        }
-        // Gera algo tipo "R001", "R002"
-        private string GenerateUniqueID()
-        {
-            try
-            {
-                // Count entries for this specific list to avoid conflicts
-                SqlCommand cmd = new SqlCommand(
-                    "SELECT COUNT(*) FROM projeto.jogo WHERE id_jogo = @gameId",
-                    cn);
-                cmd.Parameters.AddWithValue("@gameId", gameId);
-                int count = (int)cmd.ExecuteScalar();
-                return "R" + (count + 1).ToString("D3"); // Example: "R001"
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error generating ID: " + ex.Message);
-                return "R" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback with timestamp
-            }
-        }
-
-        private void txtReview_TextChanged(object sender, EventArgs e)
-        {
-
+            this.Hide();
+            UserPage userPage = new UserPage(currentUserId, currentUserId);
+            userPage.Show();
         }
     }
-
 }
