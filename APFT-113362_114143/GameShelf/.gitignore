@@ -1,5 +1,2 @@
 # Visual Studio files
-.vs/
-*.suo
-*.user
-*.userosscache
+.vs\
