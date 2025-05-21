@@ -74,7 +74,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(796, 91);
             this.panel1.TabIndex = 18;
-            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
             // label2
             // 
@@ -150,7 +149,6 @@
             this.pictureBox2.Size = new System.Drawing.Size(44, 39);
             this.pictureBox2.TabIndex = 16;
             this.pictureBox2.TabStop = false;
-            this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
             // 
             // pictureBox1
             // 
@@ -169,7 +167,6 @@
             this.button1.TabIndex = 26;
             this.button1.Text = "Go to Profile";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // Lista
             // 

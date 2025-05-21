@@ -7,13 +7,21 @@ CREATE PROCEDURE projeto.sp_SearchGames
     @minRating INT = 0
 AS
 BEGIN
-    SELECT j.id_jogo, j.titulo, j.capa, j.rating_medio 
+    SELECT DISTINCT j.id_jogo, j.titulo, j.capa, j.rating_medio 
     FROM projeto.jogo j
-    LEFT JOIN projeto.genero g ON j.id_jogo = g.id_jogo AND (@genre IS NULL OR g.nome = @genre)
-    LEFT JOIN projeto.plataforma p ON j.id_jogo = p.id_jogo AND (@platform IS NULL OR p.sigla = @platform)
+    LEFT JOIN projeto.genero g ON j.id_jogo = g.id_jogo
+    LEFT JOIN projeto.plataforma p ON j.id_jogo = p.id_jogo
     WHERE (@searchText IS NULL OR j.titulo LIKE '%' + @searchText + '%')
+    AND (@genre IS NULL OR EXISTS (
+        SELECT 1 FROM projeto.genero g2 
+        WHERE g2.id_jogo = j.id_jogo AND g2.nome = @genre
+    ))
+    AND (@platform IS NULL OR EXISTS (
+        SELECT 1 FROM projeto.plataforma p2 
+        WHERE p2.id_jogo = j.id_jogo AND p2.sigla = @platform
+    ))
     AND j.rating_medio >= @minRating
-    GROUP BY j.id_jogo, j.titulo, j.capa, j.rating_medio;
+    ORDER BY j.titulo;
 END
 GO
 
