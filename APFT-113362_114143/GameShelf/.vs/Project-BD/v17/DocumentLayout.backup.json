@@ -3,28 +3,32 @@
   "WorkspaceRootPath": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\mainpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\mainpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|c:\\users\\andre\\project-bd\\apft-113362_114143\\gameshelf\\project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\menulogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\menulogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\menulogin.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\menulogin.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\menulogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\menulogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
       "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\mainpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\mainpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|c:\\users\\andre\\project-bd\\apft-113362_114143\\gameshelf\\project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|c:\\users\\andre\\project-bd\\apft-113362_114143\\gameshelf\\project-bd\\lista.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\lista.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\lista.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\menulogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\menulogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+      "AbsoluteMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\project-bd\\mainpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{EA36E103-A139-487F-A462-A52D8372F4B6}|Project-BD\\Project-BD-GameShelf.csproj|solutionrelative:project-bd\\mainpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,32 +38,43 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Lista.cs",
-              "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.cs",
-              "RelativeDocumentMoniker": "Project-BD\\Lista.cs",
-              "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.cs",
-              "RelativeToolTip": "Project-BD\\Lista.cs",
-              "ViewState": "AgIAAMkAAAAAAAAAAAAiwOUAAAARAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "MenuLogin.cs",
+              "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MenuLogin.cs",
+              "RelativeDocumentMoniker": "Project-BD\\MenuLogin.cs",
+              "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MenuLogin.cs",
+              "RelativeToolTip": "Project-BD\\MenuLogin.cs",
+              "ViewState": "AgIAAKYAAAAAAAAAAAAAwLYAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-19T13:54:31.146Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-21T18:33:28.815Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 5,
               "Title": "MainPage.cs",
               "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MainPage.cs",
               "RelativeDocumentMoniker": "Project-BD\\MainPage.cs",
               "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MainPage.cs",
               "RelativeToolTip": "Project-BD\\MainPage.cs",
-              "ViewState": "AgIAAAYCAAAAAAAAAAAWwBcCAAA+AAAAAAAAAA==",
+              "ViewState": "AgIAACIBAAAAAAAAAAAmwCsBAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-19T00:12:51.777Z",
+              "WhenOpened": "2025-05-19T00:12:51.777Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Lista.cs",
+              "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.cs",
+              "RelativeDocumentMoniker": "Project-BD\\Lista.cs",
+              "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.cs",
+              "RelativeToolTip": "Project-BD\\Lista.cs",
+              "ViewState": "AgIAAKkBAAAAAAAAAAAYwMIBAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-21T17:21:21.181Z",
               "EditorCaption": ""
             },
             {
@@ -71,37 +86,34 @@
               "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.cs [Design]",
               "RelativeToolTip": "Project-BD\\Lista.cs [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-21T14:36:37.536Z",
-              "EditorCaption": " [Design]"
+              "WhenOpened": "2025-05-21T14:36:37.536Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "Lista.Designer.cs",
-              "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.Designer.cs",
-              "RelativeDocumentMoniker": "Project-BD\\Lista.Designer.cs",
-              "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\Lista.Designer.cs",
-              "RelativeToolTip": "Project-BD\\Lista.Designer.cs",
-              "ViewState": "AgIAAJgAAAAAAAAAAAAcwKgAAAA4AAAAAAAAAA==",
+              "Title": "MenuLogin.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MenuLogin.Designer.cs",
+              "RelativeDocumentMoniker": "Project-BD\\MenuLogin.Designer.cs",
+              "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MenuLogin.Designer.cs",
+              "RelativeToolTip": "Project-BD\\MenuLogin.Designer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-21T14:36:39.149Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-21T18:33:28.94Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 6,
               "Title": "MainPage.cs [Design]",
               "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MainPage.cs",
               "RelativeDocumentMoniker": "Project-BD\\MainPage.cs",
               "ToolTip": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MainPage.cs [Design]",
               "RelativeToolTip": "Project-BD\\MainPage.cs [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T23:10:50.672Z",
-              "EditorCaption": " [Design]"
+              "WhenOpened": "2025-04-29T23:10:50.672Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 4,
               "Title": "MenuLogin.cs [Design]",
               "DocumentMoniker": "C:\\Users\\andre\\Project-BD\\APFT-113362_114143\\GameShelf\\Project-BD\\MenuLogin.cs",
               "RelativeDocumentMoniker": "Project-BD\\MenuLogin.cs",

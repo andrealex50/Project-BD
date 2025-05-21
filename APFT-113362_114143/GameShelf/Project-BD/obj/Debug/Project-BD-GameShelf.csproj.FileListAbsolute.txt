@@ -22,3 +22,5 @@ C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShel
 C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.CoreCompileInputs.cache
 C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.exe
 C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.pdb
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.GamePage.resources
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.UserPage.resources

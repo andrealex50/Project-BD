@@ -15,14 +15,19 @@ namespace Project_BD
     {
         private string currentUserId;
         private string listId;
+        private string listTitle;
+        private string creatorName;
         private SqlConnection cn;
         public static ConnectionBD bdconnect = new ConnectionBD();
 
-        public Lista(string userId, string listId)
+        public Lista(string userId, string listId, string listTitle, string creatorName)
         {
             InitializeComponent();
-            currentUserId = userId;
+            this.currentUserId = userId;
             this.listId = listId;
+            this.listTitle = listTitle;
+            this.creatorName = creatorName;
+            this.Text = listTitle; // Set form title
             LoadListData();
             LoadListEntries();
         }
@@ -51,21 +56,26 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT l.titulo_lista, l.descricao_lista, l.visibilidade_lista, u.nome as creator_name
-                              FROM projeto.lista l
-                              JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
-                              WHERE l.id_lista = @listId";
+                string query = @"SELECT l.descricao_lista, l.visibilidade_lista, 
+                               CASE WHEN l.id_utilizador = @currentUserId THEN 1 ELSE 0 END AS is_owner
+                               FROM projeto.lista l
+                               WHERE l.id_lista = @listId";
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@listId", listId);
+                command.Parameters.AddWithValue("@currentUserId", currentUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
                 if (reader.Read())
                 {
-                    // Nome da lista
-                    label2.Text = reader["titulo_lista"].ToString();
+                    // Set list title
+                    panel2.Controls.Clear();
+                    Label titleLable = new Label();
+                    titleLable.Text = listTitle;
+                    titleLable.AutoSize = true;
+                    panel2.Controls.Add(titleLable);
 
-                    // Descrição da lista
+                    // Set list description
                     panel4.Controls.Clear();
                     Label descLabel = new Label();
                     descLabel.Text = reader["descricao_lista"].ToString();
@@ -73,12 +83,13 @@ namespace Project_BD
                     descLabel.MaximumSize = new Size(panel4.Width - 20, 0);
                     panel4.Controls.Add(descLabel);
 
-                    // De quem é a lista
+                    // Set creator info
                     panel3.Controls.Clear();
                     Label creatorLabel = new Label();
-                    creatorLabel.Text = "Created by: " + reader["creator_name"].ToString();
+                    creatorLabel.Text = creatorName;
                     creatorLabel.AutoSize = true;
                     panel3.Controls.Add(creatorLabel);
+
                 }
                 reader.Close();
             }
@@ -100,11 +111,12 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT el.id_item, j.titulo as game_title, el.estado, el.posicao, el.notas_adicionais
-                              FROM projeto.entrada_lista el
-                              JOIN projeto.jogo j ON el.id_jogo = j.id_jogo
-                              WHERE el.id_lista = @listId
-                              ORDER BY el.posicao";
+                string query = @"SELECT el.id_item, j.titulo as game_title, j.id_jogo, el.estado, 
+                               el.posicao, el.notas_adicionais, j.capa
+                               FROM projeto.entrada_lista el
+                               JOIN projeto.jogo j ON el.id_jogo = j.id_jogo
+                               WHERE el.id_lista = @listId
+                               ORDER BY el.posicao";
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@listId", listId);
@@ -115,6 +127,7 @@ namespace Project_BD
                 listView1.View = View.Details;
                 listView1.Columns.Clear();
                 listView1.Columns.Add("ID", 0);
+                listView1.Columns.Add("Game ID", 0);
                 listView1.Columns.Add("Position", 50);
                 listView1.Columns.Add("Game Title", 200);
                 listView1.Columns.Add("Status", 100);
@@ -123,10 +136,13 @@ namespace Project_BD
                 while (reader.Read())
                 {
                     ListViewItem item = new ListViewItem(reader["id_item"].ToString());
+                    item.SubItems.Add(reader["id_jogo"].ToString());
                     item.SubItems.Add(reader["posicao"]?.ToString() ?? "");
                     item.SubItems.Add(reader["game_title"].ToString());
                     item.SubItems.Add(reader["estado"].ToString());
                     item.SubItems.Add(reader["notas_adicionais"]?.ToString() ?? "");
+
+                    // You could add image handling here if you want to show game covers
                     listView1.Items.Add(item);
                 }
                 reader.Close();
@@ -154,7 +170,7 @@ namespace Project_BD
         // Nome da lista
         private void panel2_Paint(object sender, PaintEventArgs e)
         {
-
+            
         }
 
         // Entradas de lista
@@ -169,7 +185,9 @@ namespace Project_BD
         // Voltar para a pagina inicial
         private void pictureBox3_Click(object sender, EventArgs e)
         {
-            this.Close();
+            this.Hide();
+            MainPage mainPage = new MainPage(currentUserId);
+            mainPage.Show();
         }
 
         // De quem é a lista
@@ -185,14 +203,13 @@ namespace Project_BD
         }
 
         // Vai para o meu perfil
-        /*
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-            UserPage profileForm = new UserPage(currentUserId);
+            UserPage profileForm = new UserPage(currentUserId, currentUserId);
             profileForm.Show();
             this.Hide();
         } 
-        */
+        
 
         private void label4_Click(object sender, EventArgs e)
         {
@@ -200,7 +217,7 @@ namespace Project_BD
         }
 
         // Visitar o perfil de quem fez a lista
-        /*
+        
         private void button1_Click(object sender, EventArgs e)
         {
             try
@@ -219,7 +236,7 @@ namespace Project_BD
                     string listOwnerId = result.ToString();
                     if (listOwnerId != currentUserId)
                     {
-                        UserPage profileForm = new UserPage(listOwnerId);
+                        UserPage profileForm = new UserPage(currentUserId, listOwnerId);
                         profileForm.Show();
                         this.Hide();
                     }
@@ -238,11 +255,219 @@ namespace Project_BD
                 cn.Close();
             }
         }
-        */
+        
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
 
+        }
+
+        // Only the owner of this list can edit
+        private void button2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                // Check if current user is the owner of the list
+                string query = @"SELECT id_utilizador FROM projeto.lista WHERE id_lista = @listId";
+                SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@listId", listId);
+
+                object result = command.ExecuteScalar();
+                if (result != null && result.ToString() == currentUserId)
+                {
+                    // User is the owner - show add game popup
+                    ShowAddGamePopup();
+                }
+                else
+                {
+                    MessageBox.Show("Only the list owner can edit this list.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error verifying list ownership: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
+        private void ShowAddGamePopup()
+        {
+            Form popupForm = new Form();
+            popupForm.Text = "Add Game to List";
+            popupForm.Size = new Size(600, 400);
+            popupForm.StartPosition = FormStartPosition.CenterParent;
+
+            // Search controls
+            TextBox searchBox = new TextBox() { Left = 20, Top = 20, Width = 300 };
+            Button searchButton = new Button() { Text = "Search", Left = 330, Top = 20, Width = 80 };
+            ListView gamesListView = new ListView() { Left = 20, Top = 60, Width = 540, Height = 250 };
+            gamesListView.View = View.Details;
+            gamesListView.FullRowSelect = true;
+            gamesListView.Columns.Add("ID", 0);
+            gamesListView.Columns.Add("Title", 300);
+            gamesListView.Columns.Add("Rating", 100);
+
+            // Status selection
+            Label statusLabel = new Label() { Text = "Status:", Left = 20, Top = 320 };
+            ComboBox statusComboBox = new ComboBox() { Left = 80, Top = 320, Width = 150 };
+            statusComboBox.Items.AddRange(new string[] { "Jogado", "Não Jogado", "Planeia Jogar", "Desistiu" });
+            statusComboBox.SelectedIndex = 0;
+
+            // Notes
+            Label notesLabel = new Label() { Text = "Notes:", Left = 240, Top = 320 };
+            TextBox notesTextBox = new TextBox() { Left = 300, Top = 320, Width = 200 };
+
+            // Add button
+            Button addButton = new Button() { Text = "Add to List", Left = 450, Top = 320, Width = 100 };
+
+            // Search button click
+            searchButton.Click += (s, e) => {
+                SearchGames(searchBox.Text, gamesListView);
+            };
+
+            // Add button click
+            addButton.Click += (s, e) => {
+                if (gamesListView.SelectedItems.Count > 0)
+                {
+                    string gameId = gamesListView.SelectedItems[0].Text;
+                    string status = statusComboBox.SelectedItem.ToString();
+                    string notes = notesTextBox.Text;
+
+                    AddGameToList(gameId, status, notes);
+                    popupForm.Close();
+                    LoadListEntries(); // Refresh the list
+                }
+                else
+                {
+                    MessageBox.Show("Please select a game to add.");
+                }
+            };
+
+            // Add controls to form
+            popupForm.Controls.Add(searchBox);
+            popupForm.Controls.Add(searchButton);
+            popupForm.Controls.Add(gamesListView);
+            popupForm.Controls.Add(statusLabel);
+            popupForm.Controls.Add(statusComboBox);
+            popupForm.Controls.Add(notesLabel);
+            popupForm.Controls.Add(notesTextBox);
+            popupForm.Controls.Add(addButton);
+
+            popupForm.ShowDialog();
+        }
+
+        private void SearchGames(string searchText, ListView listView)
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                SqlCommand command = new SqlCommand("projeto.sp_SearchGames", cn);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.AddWithValue("@searchText",
+                    string.IsNullOrWhiteSpace(searchText) ? (object)DBNull.Value : searchText);
+                command.Parameters.AddWithValue("@genre", DBNull.Value);
+                command.Parameters.AddWithValue("@platform", DBNull.Value);
+                command.Parameters.AddWithValue("@minRating", 0);
+
+                SqlDataReader reader = command.ExecuteReader();
+
+                listView.Items.Clear();
+                while (reader.Read())
+                {
+                    ListViewItem item = new ListViewItem(reader["id_jogo"].ToString());
+                    item.SubItems.Add(reader["titulo"].ToString());
+                    item.SubItems.Add(reader["rating_medio"].ToString());
+                    listView.Items.Add(item);
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error searching games: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
+        private void AddGameToList(string gameId, string status, string notes)
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                // First get the next position number
+                string positionQuery = @"SELECT ISNULL(MAX(posicao), 0) + 1 
+              FROM projeto.entrada_lista 
+              WHERE id_lista = @listId";
+                SqlCommand positionCmd = new SqlCommand(positionQuery, cn);
+                positionCmd.Parameters.AddWithValue("@listId", listId);
+                int position = (int)positionCmd.ExecuteScalar();
+
+                // Generate the unique ID
+                string id_item_ = GenerateUniqueID();
+
+                // Insert the new entry
+                string insertQuery = @"INSERT INTO projeto.entrada_lista 
+             (id_item, estado, posicao, notas_adicionais, id_jogo, id_lista)
+             VALUES 
+             (@id_item, @status, @position, @notes, @gameId, @listId)";
+                SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
+                insertCmd.Parameters.AddWithValue("@id_item", id_item_);
+                insertCmd.Parameters.AddWithValue("@status", status);
+                insertCmd.Parameters.AddWithValue("@position", position);
+                insertCmd.Parameters.AddWithValue("@notes", string.IsNullOrEmpty(notes) ? (object)DBNull.Value : notes);
+                insertCmd.Parameters.AddWithValue("@gameId", gameId);
+                insertCmd.Parameters.AddWithValue("@listId", listId);
+
+                int rowsAffected = insertCmd.ExecuteNonQuery();
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("Game added to list successfully!");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding game to list: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
+        // Gera algo tipo "E001", "E002"
+        private string GenerateUniqueID()
+        {
+            try
+            {
+                // Count entries for this specific list to avoid conflicts
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT COUNT(*) FROM projeto.entrada_lista WHERE id_lista = @listId",
+                    cn);
+                cmd.Parameters.AddWithValue("@listId", listId);
+                int count = (int)cmd.ExecuteScalar();
+                return "E" + (count + 1).ToString("D3"); // Example: "E001"
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error generating ID: " + ex.Message);
+                return "E" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback with timestamp
+            }
         }
     }
 }

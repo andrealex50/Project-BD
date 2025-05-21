@@ -24,7 +24,13 @@ namespace Project_BD
         public MainPage(String userId)
         {
             InitializeComponent();
+
+            listView2.FullRowSelect = true;
+            listView2.View = View.Details;
+            listView2.MultiSelect = false; // Allow only single selection
+
             currentUserId = userId;
+            ApplyListFilters();
             LoadUserData();
             LoadAllGames();
             LoadUserLists();
@@ -385,7 +391,24 @@ namespace Project_BD
         // Mostrar as listas
         private void listView2_SelectedIndexChanged(object sender, EventArgs e)
         {
+            try
+            {
+                if (listView2.SelectedItems.Count > 0)
+                {
+                    string selectedListId = listView2.SelectedItems[0].Text;
+                    string listTitle = listView2.SelectedItems[0].SubItems[1].Text;
+                    string creatorName = listView2.SelectedItems[0].SubItems[2].Text;
 
+                    this.Hide();
+
+                    Lista listaForm = new Lista(currentUserId, selectedListId, listTitle, creatorName);
+                    listaForm.Show(); 
+                }
+            } 
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
         }
 
         private void ApplyListFilters()
