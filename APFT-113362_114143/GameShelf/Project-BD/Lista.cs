@@ -27,7 +27,7 @@ namespace Project_BD
             this.listId = listId;
             this.listTitle = listTitle;
             this.creatorName = creatorName;
-            this.Text = listTitle; // Set form title
+            this.Text = listTitle; 
             LoadListData();
             LoadListEntries();
         }
@@ -142,7 +142,6 @@ namespace Project_BD
                     item.SubItems.Add(reader["estado"].ToString());
                     item.SubItems.Add(reader["notas_adicionais"]?.ToString() ?? "");
 
-                    // You could add image handling here if you want to show game covers
                     listView1.Items.Add(item);
                 }
                 reader.Close();
@@ -176,10 +175,7 @@ namespace Project_BD
         // Entradas de lista
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count > 0)
-            {
-                // You can add functionality when a list entry is selected
-            }
+
         }
 
         // Voltar para a pagina inicial
@@ -303,36 +299,106 @@ namespace Project_BD
             popupForm.Text = "Add Game to List";
             popupForm.Size = new Size(600, 400);
             popupForm.StartPosition = FormStartPosition.CenterParent;
+            popupForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            popupForm.MaximizeBox = false;
+            popupForm.MinimizeBox = false;
 
             // Search controls
-            TextBox searchBox = new TextBox() { Left = 20, Top = 20, Width = 300 };
-            Button searchButton = new Button() { Text = "Search", Left = 330, Top = 20, Width = 80 };
-            ListView gamesListView = new ListView() { Left = 20, Top = 60, Width = 540, Height = 250 };
-            gamesListView.View = View.Details;
-            gamesListView.FullRowSelect = true;
-            gamesListView.Columns.Add("ID", 0);
-            gamesListView.Columns.Add("Title", 300);
-            gamesListView.Columns.Add("Rating", 100);
+            TextBox searchBox = new TextBox()
+            {
+                Left = 20,
+                Top = 20,
+                Width = 300,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
 
-            // Status selection
-            Label statusLabel = new Label() { Text = "Status:", Left = 20, Top = 320 };
-            ComboBox statusComboBox = new ComboBox() { Left = 80, Top = 320, Width = 150 };
+            Button searchButton = new Button()
+            {
+                Text = "Search",
+                Left = 330,
+                Top = 20,
+                Width = 80,
+                FlatStyle = FlatStyle.Flat,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            searchButton.FlatAppearance.BorderSize = 1;
+
+            // Games ListView
+            ListView gamesListView = new ListView()
+            {
+                Left = 20,
+                Top = 60,
+                Width = 560,
+                Height = 250,
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = true,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            gamesListView.Columns.Add("ID", 0);
+            gamesListView.Columns.Add("Title", 400);
+            gamesListView.Columns.Add("Rating", 120);
+
+            // Bottom controls 
+            // Status section
+            Label statusLabel = new Label()
+            {
+                Text = "Status:",
+                Left = 20,
+                Top = 320,
+                Width = 50,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+
+            ComboBox statusComboBox = new ComboBox()
+            {
+                Left = 75,
+                Top = 320,
+                Width = 120,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
             statusComboBox.Items.AddRange(new string[] { "Jogado", "Não Jogado", "Planeia Jogar", "Desistiu" });
             statusComboBox.SelectedIndex = 0;
 
-            // Notes
-            Label notesLabel = new Label() { Text = "Notes:", Left = 240, Top = 320 };
-            TextBox notesTextBox = new TextBox() { Left = 300, Top = 320, Width = 200 };
+            // Notes section
+            Label notesLabel = new Label()
+            {
+                Text = "Notes:",
+                Left = 210,
+                Top = 320,
+                Width = 45,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+
+            TextBox notesTextBox = new TextBox()
+            {
+                Left = 260,
+                Top = 320,
+                Width = 120,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
 
             // Add button
-            Button addButton = new Button() { Text = "Add to List", Left = 450, Top = 320, Width = 100 };
+            Button addButton = new Button()
+            {
+                Text = "Add to List",
+                Left = 440,
+                Top = 320,
+                Width = 120,
+                Height = 23,
+                BackColor = Color.DodgerBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+            };
+            addButton.FlatAppearance.BorderSize = 0;
 
-            // Search button click
+            // Event handlers
             searchButton.Click += (s, e) => {
                 SearchGames(searchBox.Text, gamesListView);
             };
 
-            // Add button click
             addButton.Click += (s, e) => {
                 if (gamesListView.SelectedItems.Count > 0)
                 {
@@ -342,23 +408,22 @@ namespace Project_BD
 
                     AddGameToList(gameId, status, notes);
                     popupForm.Close();
-                    LoadListEntries(); // Refresh the list
+                    LoadListEntries();
                 }
                 else
                 {
-                    MessageBox.Show("Please select a game to add.");
+                    MessageBox.Show("Please select a game to add.", "Selection Required",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             };
 
             // Add controls to form
-            popupForm.Controls.Add(searchBox);
-            popupForm.Controls.Add(searchButton);
-            popupForm.Controls.Add(gamesListView);
-            popupForm.Controls.Add(statusLabel);
-            popupForm.Controls.Add(statusComboBox);
-            popupForm.Controls.Add(notesLabel);
-            popupForm.Controls.Add(notesTextBox);
-            popupForm.Controls.Add(addButton);
+            popupForm.Controls.AddRange(new Control[] {
+                searchBox, searchButton, gamesListView,
+                statusLabel, statusComboBox,
+                notesLabel, notesTextBox,
+                addButton
+            });
 
             popupForm.ShowDialog();
         }

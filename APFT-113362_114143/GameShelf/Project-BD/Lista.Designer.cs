@@ -134,10 +134,10 @@
             // 
             // panel4
             // 
-            this.panel4.Location = new System.Drawing.Point(608, 171);
+            this.panel4.Location = new System.Drawing.Point(625, 171);
             this.panel4.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(428, 75);
+            this.panel4.Size = new System.Drawing.Size(403, 75);
             this.panel4.TabIndex = 25;
             this.panel4.Paint += new System.Windows.Forms.PaintEventHandler(this.panel4_Paint);
             // 
