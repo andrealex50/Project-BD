@@ -10,3 +10,15 @@ C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Proj
 C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.pdb
 C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.Lista.resources
 C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.MainPage.resources
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\bin\Debug\Project-BD.exe.config
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\bin\Debug\Project-BD.exe
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\bin\Debug\Project-BD.pdb
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.AssemblyReference.cache
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.Lista.resources
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.MainPage.resources
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.MenuLogin.resources
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.Properties.Resources.resources
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.GenerateResource.cache
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD-GameShelf.csproj.CoreCompileInputs.cache
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.exe
+C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project-BD.pdb
