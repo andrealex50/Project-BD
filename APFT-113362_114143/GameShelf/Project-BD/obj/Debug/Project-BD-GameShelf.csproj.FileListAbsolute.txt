@@ -31,3 +31,5 @@ C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShel
 C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.UserPage.resources
 C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.EditProfileForm.resources
 C:\Users\titoj\OneDrive\Documentos\GitHub\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.RegisterForm.resources
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.EditProfileForm.resources
+C:\Users\andre\Project-BD\APFT-113362_114143\GameShelf\Project-BD\obj\Debug\Project_BD.RegisterForm.resources
