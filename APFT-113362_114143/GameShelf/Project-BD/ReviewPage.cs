@@ -213,6 +213,9 @@ namespace Project_BD
             finally
             {
                 cn?.Close();
+                GamePage gamePage = new GamePage(currentUserId, gameId);
+                gamePage.Show();
+
             }
         }
 
@@ -249,6 +252,8 @@ namespace Project_BD
         private void btnCancel_Click(object sender, EventArgs e)
         {
             this.Close();
+            GamePage gamePage = new GamePage(currentUserId, gameId);
+            gamePage.Show();
         }
 
         private void pictureBox3_Click(object sender, EventArgs e)
