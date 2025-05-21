@@ -57,44 +57,12 @@ namespace Project_BD
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if (!verifySGBDConnection())
-                return;
-
-            string email = textBox2.Text.Trim();
-            string password = textBox1.Text.Trim();
-
-            if (email == "" || password == "")
+            using (RegisterForm registerForm = new RegisterForm())
             {
-                MessageBox.Show("Por favor, preencha todos os campos.");
-                return;
-            }
-
-            string nome = "MANELCORSAS";  // FAZER DEPOIS UMA PAGINA QUE PEÇA O NOME NÉ                TODO
-            string id_utilizador = GenerateUniqueID(); // método que gera um ID único (U001, U002...)
-
-            string hashedPassword = ComputeSha256Hash(password);
-
-            try
-            {
-                SqlCommand cmd = new SqlCommand(
-                    "INSERT INTO projeto.utilizador (id_utilizador, nome, email, password) " +
-                    "VALUES (@Id, @Nome, @Email, @Password)", cn);
-
-                cmd.Parameters.AddWithValue("@Id", id_utilizador);
-                cmd.Parameters.AddWithValue("@Nome", nome);
-                cmd.Parameters.AddWithValue("@Email", email);
-                cmd.Parameters.AddWithValue("@Password", hashedPassword);
-
-                int rows = cmd.ExecuteNonQuery();
-
-                if (rows > 0)
-                    MessageBox.Show("Conta criada com sucesso!");
-                else
-                    MessageBox.Show("Erro ao criar conta.");
-            }
-            catch (SqlException ex)
-            {
-                MessageBox.Show("Erro SQL: " + ex.Message);
+                if (registerForm.ShowDialog() == DialogResult.OK)
+                {
+                    MessageBox.Show("Account created successfully! Please log in.");
+                }
             }
         }
 

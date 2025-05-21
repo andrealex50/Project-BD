@@ -211,7 +211,9 @@ namespace Project_BD
         // Abre perfil
         private void pictureBox2_Click_2(object sender, EventArgs e)
         {
-
+            this.Hide();
+            UserPage userPageForm = new UserPage(currentUserId, currentUserId);
+            userPageForm.Show();
         }
 
         // Mostrar os amigos
