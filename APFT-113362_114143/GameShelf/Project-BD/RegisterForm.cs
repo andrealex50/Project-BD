@@ -127,5 +127,10 @@ namespace Project_BD
             this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
+        //Hello
+        private void RegisterForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
