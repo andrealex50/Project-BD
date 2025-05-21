@@ -126,6 +126,7 @@
             this.txtReview.Name = "txtReview";
             this.txtReview.Size = new System.Drawing.Size(450, 186);
             this.txtReview.TabIndex = 6;
+            this.txtReview.TextChanged += new System.EventHandler(this.txtReview_TextChanged);
             // 
             // btnSubmit
             // 

@@ -124,6 +124,9 @@ namespace Project_BD
                 checkCmd.Parameters.AddWithValue("@gameId", gameId);
                 int reviewCount = Convert.ToInt32(checkCmd.ExecuteScalar());
 
+                // Generate the unique ID if needed for a new review
+                string id_review_ = GenerateUniqueID();
+
                 string query;
                 if (reviewCount > 0)
                 {
@@ -140,10 +143,11 @@ namespace Project_BD
                             (id_review, horas_jogadas, rating, descricao_review, 
                              data_review, id_utilizador, id_jogo)
                             VALUES 
-                            (NEWID(), @hours, @rating, @review, GETDATE(), @userId, @gameId)";
+                            (@id_review, @hours, @rating, @review, GETDATE(), @userId, @gameId)";
                 }
 
                 SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@id_review", id_review_);
                 command.Parameters.AddWithValue("@hours", numHoursPlayed.Value);
                 command.Parameters.AddWithValue("@rating", numRating.Value);
                 command.Parameters.AddWithValue("@review", txtReview.Text);
@@ -223,7 +227,7 @@ namespace Project_BD
             UserPage userPageForm = new UserPage(currentUserId, currentUserId);
             userPageForm.Show();
         }
-        // Gera algo tipo "J001", "J002"
+        // Gera algo tipo "R001", "R002"
         private string GenerateUniqueID()
         {
             try
@@ -234,13 +238,18 @@ namespace Project_BD
                     cn);
                 cmd.Parameters.AddWithValue("@gameId", gameId);
                 int count = (int)cmd.ExecuteScalar();
-                return "J" + (count + 1).ToString("D3"); // Example: "E001"
+                return "R" + (count + 1).ToString("D3"); // Example: "R001"
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error generating ID: " + ex.Message);
-                return "E" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback with timestamp
+                return "R" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback with timestamp
             }
+        }
+
+        private void txtReview_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 
