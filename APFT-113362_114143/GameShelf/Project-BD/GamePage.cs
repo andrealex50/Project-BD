@@ -315,9 +315,9 @@ namespace Project_BD
         // Place a review
         private void button1_Click(object sender, EventArgs e)
         {
-            //this.Close();
-            //ReviewPage reviewPageForm = new ReviewPage(currentUserId, gameId);
-            //reviewPageForm.Show();
+            this.Close();
+            ReviewPage reviewPageForm = new ReviewPage(currentUserId, gameId);
+            reviewPageForm.Show();
         }
 
         private void panel5_Paint(object sender, PaintEventArgs e)

@@ -25,6 +25,11 @@ namespace Project_BD
         {
             InitializeComponent();
 
+            listView1.DoubleClick += listView1_DoubleClick;
+            listView1.FullRowSelect = true;
+            listView1.View = View.Details;
+            listView1.MultiSelect = false;
+
             listView2.FullRowSelect = true;
             listView2.View = View.Details;
             listView2.MultiSelect = false; // Allow only single selection
@@ -206,6 +211,19 @@ namespace Project_BD
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void listView1_DoubleClick(object sender, EventArgs e)
+        {
+
+            if (listView1.SelectedItems.Count > 0)
+            {
+                string selectedGameId = listView1.SelectedItems[0].Text;
+
+                this.Hide();
+                GamePage gamePageForm = new GamePage(currentUserId, selectedGameId);
+                gamePageForm.Show();
+            }
         }
 
         // Abre perfil
