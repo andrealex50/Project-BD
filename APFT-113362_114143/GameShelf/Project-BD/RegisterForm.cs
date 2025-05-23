@@ -88,7 +88,7 @@ namespace Project_BD
             {
                 if (ex.Number == 2627) // Unique constraint violation
                 {
-                    MessageBox.Show("Email already in use.");
+                    MessageBox.Show("Name already in use.");
                 }
                 else
                 {

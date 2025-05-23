@@ -1,4 +1,6 @@
-﻿namespace Project_BD
+﻿using System.Windows.Forms;
+
+namespace Project_BD
 {
     partial class MainPage
     {
@@ -109,6 +111,9 @@
             this.listView2.TabIndex = 17;
             this.listView2.UseCompatibleStateImageBehavior = false;
             this.listView2.SelectedIndexChanged += new System.EventHandler(this.listView2_SelectedIndexChanged);
+            this.listView2.FullRowSelect = true;
+            this.listView2.View = View.Details;
+            this.listView2.MultiSelect = false;
             // 
             // textBox4
             // 
@@ -194,6 +199,9 @@
             this.listView4.TabIndex = 19;
             this.listView4.UseCompatibleStateImageBehavior = false;
             this.listView4.SelectedIndexChanged += new System.EventHandler(this.listView4_SelectedIndexChanged);
+            this.listView4.FullRowSelect = true;
+            this.listView4.View = View.Details;
+            this.listView4.MultiSelect = false;
             // 
             // textBox3
             // 
@@ -216,6 +224,8 @@
             this.listView3.TabIndex = 16;
             this.listView3.UseCompatibleStateImageBehavior = false;
             this.listView3.SelectedIndexChanged += new System.EventHandler(this.listView3_SelectedIndexChanged_1);
+            this.listView3.FullRowSelect = true;
+            this.listView3.MultiSelect = false;
             // 
             // listView1
             // 
@@ -227,6 +237,9 @@
             this.listView1.TabIndex = 19;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.SelectedIndexChanged += new System.EventHandler(this.listView1_SelectedIndexChanged);
+            this.listView1.FullRowSelect = true;
+            this.listView1.View = View.Details;
+            this.listView1.MultiSelect = false;
             // 
             // button1
             // 

@@ -33,6 +33,9 @@ namespace Project_BD
             // Only show edit buttons if viewing own profile
             button1.Visible = (currentUserId == profileUserId);
             button2.Visible = (currentUserId == profileUserId);
+
+            // Only show add friend button if viewing someone else's profile
+            button3.Visible = (currentUserId != profileUserId);
         }
 
         private SqlConnection getSGBDConnection()
@@ -59,6 +62,11 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
+                // Clear existing controls first to avoid duplicates
+                panel4.Controls.Clear();
+                panel2.Controls.Clear();
+
+                // Load basic user info
                 string query = "SELECT u.nome, p.bio, p.foto FROM projeto.utilizador u " +
                                "LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador " +
                                "WHERE u.id_utilizador = @userId";
@@ -66,37 +74,87 @@ namespace Project_BD
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@userId", profileUserId);
 
-                SqlDataReader reader = command.ExecuteReader();
-                if (reader.Read())
+                using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    // Create a label for name
-                    Label nameLabel = new Label();
-                    nameLabel.Text = reader["nome"].ToString();
-                    nameLabel.AutoSize = true;
-                    nameLabel.Font = new Font("Microsoft Sans Serif", 10);
-                    panel4.Controls.Add(nameLabel);
-
-                    // Create a label for bio
-                    if (reader["bio"] != DBNull.Value)
+                    if (reader.Read())
                     {
-                        Label bioLabel = new Label();
-                        bioLabel.Text = reader["bio"].ToString();
-                        bioLabel.AutoSize = true;
-                        bioLabel.Font = new Font("Microsoft Sans Serif", 9);
-                        panel2.Controls.Add(bioLabel);
-                    }
+                        // Create a label for name
+                        Label nameLabel = new Label();
+                        nameLabel.Text = reader["nome"].ToString();
+                        nameLabel.AutoSize = true;
+                        nameLabel.Font = new Font("Microsoft Sans Serif", 10);
+                        panel4.Controls.Add(nameLabel);
 
-                    // Load profile picture if exists
-                    if (reader["foto"] != DBNull.Value)
-                    {
-                        string imagePath = reader["foto"].ToString();
-                        if (System.IO.File.Exists(imagePath))
+                        // Create a label for bio
+                        if (reader["bio"] != DBNull.Value)
                         {
-                            pictureBox4.Image = Image.FromFile(imagePath);
+                            Label bioLabel = new Label();
+                            bioLabel.Text = reader["bio"].ToString();
+                            bioLabel.AutoSize = true;
+                            bioLabel.Font = new Font("Microsoft Sans Serif", 9);
+                            panel2.Controls.Add(bioLabel);
+                        }
+
+                        // Load profile picture if exists
+                        if (reader["foto"] != DBNull.Value)
+                        {
+                            string imagePath = reader["foto"].ToString();
+                            if (System.IO.File.Exists(imagePath))
+                            {
+                                pictureBox4.Image = Image.FromFile(imagePath);
+                            }
+                            else
+                            {
+                                pictureBox4.Image = null; // Clear image if file doesn't exist
+                            }
+                        }
+                        else
+                        {
+                            pictureBox4.Image = null; // Clear image if no path in database
                         }
                     }
                 }
-                reader.Close();
+
+                // Check follow status if viewing another user's profile
+                if (currentUserId != profileUserId)
+                {
+                    // Need a new connection for the second query
+                    using (SqlConnection followCn = getSGBDConnection())
+                    {
+                        if (followCn.State != ConnectionState.Open)
+                            followCn.Open();
+
+                        // Check if already following this user
+                        string checkFollowQuery = @"SELECT 1 FROM projeto.segue 
+                                     WHERE id_utilizador_seguidor = @currentUserId 
+                                     AND id_utilizador_seguido = @profileUserId";
+
+                        using (SqlCommand checkFollowCmd = new SqlCommand(checkFollowQuery, followCn))
+                        {
+                            checkFollowCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                            checkFollowCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                            object followResult = checkFollowCmd.ExecuteScalar();
+
+                            if (followResult != null)
+                            {
+                                // Use Invoke only if required
+                                if (button3.InvokeRequired)
+                                {
+                                    button3.Invoke((MethodInvoker)delegate {
+                                        button3.Enabled = false;
+                                        button3.Text = "Following";
+                                    });
+                                }
+                                else
+                                {
+                                    button3.Enabled = false;
+                                    button3.Text = "Following";
+                                }
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -104,7 +162,8 @@ namespace Project_BD
             }
             finally
             {
-                cn.Close();
+                if (cn != null && cn.State == ConnectionState.Open)
+                    cn.Close();
             }
         }
 
@@ -521,6 +580,67 @@ namespace Project_BD
         private void panel5_Paint(object sender, PaintEventArgs e)
         {
 
+        }
+
+        // Botão para adicionar amigo (só deve aparecer se o perfil não for nosso)
+        private void button3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                // Check if already following this user
+                string checkQuery = @"SELECT 1 FROM projeto.segue 
+                          WHERE id_utilizador_seguidor = @currentUserId 
+                          AND id_utilizador_seguido = @profileUserId";
+
+                SqlCommand checkCmd = new SqlCommand(checkQuery, cn);
+                checkCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                checkCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                object result = checkCmd.ExecuteScalar();
+
+                if (result != null)
+                {
+                    MessageBox.Show("You are already following this user!");
+                    return;
+                }
+
+                // Insert follow relationship
+                string insertQuery = @"INSERT INTO projeto.segue 
+                            (id_utilizador_seguidor, id_utilizador_seguido, data_seguir) 
+                            VALUES (@currentUserId, @profileUserId, GETDATE())";
+
+                SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
+                insertCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                insertCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                int rowsAffected = insertCmd.ExecuteNonQuery();
+
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("You are now following this user!");
+                    button3.Enabled = false;
+                    button3.Text = "Following";
+
+                    // Refresh friends list to show the new relationship
+                    LoadUserFriends();
+                }
+                else
+                {
+                    MessageBox.Show("Failed to follow user.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error following user: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
         }
     }
 }

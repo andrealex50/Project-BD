@@ -25,14 +25,13 @@ namespace Project_BD
         {
             InitializeComponent();
 
-            listView1.DoubleClick += listView1_DoubleClick;
-            listView1.FullRowSelect = true;
-            listView1.View = View.Details;
-            listView1.MultiSelect = false;
 
-            listView2.FullRowSelect = true;
-            listView2.View = View.Details;
-            listView2.MultiSelect = false; // Allow only single selection
+            listView4.FullRowSelect = true;
+            listView4.View = View.Details;
+            listView4.MultiSelect = false;
+
+            listView3.FullRowSelect = true;
+            listView3.MultiSelect = false;
 
             currentUserId = userId;
             ApplyListFilters();
@@ -237,7 +236,15 @@ namespace Project_BD
         // Mostrar os amigos
         private void listView3_SelectedIndexChanged_1(object sender, EventArgs e)
         {
+            if (listView3.SelectedItems.Count > 0)
+            {
+                string selectedFriendId = listView3.SelectedItems[0].Text;
+                string selectedFriendName = listView3.SelectedItems[0].SubItems[1].Text;
 
+                this.Hide();
+                UserPage friendProfile = new UserPage(currentUserId, selectedFriendId);
+                friendProfile.Show();
+            }
         }
 
         // Botão para abrir pop-up filtros dos jogos
@@ -544,7 +551,15 @@ namespace Project_BD
         // Mostra utilizadores conforme a pesquisa
         private void listView4_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (listView4.SelectedItems.Count > 0)
+            {
+                string selectedUserId = listView4.SelectedItems[0].Text;
+                string selectedUserName = listView4.SelectedItems[0].SubItems[1].Text;
 
+                this.Hide();
+                UserPage userPageForm = new UserPage(currentUserId, selectedUserId);
+                userPageForm.Show();
+            }
         }
 
         // Adiciona o utilizador selecionado no listView4_SelectedIndexChanged
