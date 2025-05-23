@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Project_BD
@@ -50,7 +46,6 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                // Load game basic info
                 string query = @"SELECT j.titulo, j.data_lancamento, j.sinopse, j.capa, 
                                 j.rating_medio, j.tempo_medio_gameplay, j.preco
                                 FROM projeto.jogo j
@@ -62,7 +57,6 @@ namespace Project_BD
                 SqlDataReader reader = command.ExecuteReader();
                 if (reader.Read())
                 {
-                    // Set game title
                     panel2.Controls.Clear();
                     panel2.Controls.Add(new Label()
                     {
@@ -71,7 +65,6 @@ namespace Project_BD
                         AutoSize = true
                     });
 
-                    // Set game cover image if exists
                     if (reader["capa"] != DBNull.Value)
                     {
                         string imagePath = reader["capa"].ToString();
@@ -81,7 +74,6 @@ namespace Project_BD
                         }
                     }
 
-                    // Set sinopse
                     panel4.Controls.Clear();
                     panel4.Controls.Add(new Label()
                     {
@@ -90,7 +82,6 @@ namespace Project_BD
                         MaximumSize = new Size(panel4.Width - 10, 0)
                     });
 
-                    // Set launch date
                     panel5.Controls.Clear();
                     panel5.Controls.Add(new Label()
                     {
@@ -98,7 +89,6 @@ namespace Project_BD
                         AutoSize = true
                     });
 
-                    // Set rating
                     panel6.Controls.Clear();
                     panel6.Controls.Add(new Label()
                     {
@@ -106,7 +96,6 @@ namespace Project_BD
                         AutoSize = true
                     });
 
-                    // Set gameplay time
                     panel7.Controls.Clear();
                     panel7.Controls.Add(new Label()
                     {
@@ -114,7 +103,6 @@ namespace Project_BD
                         AutoSize = true
                     });
 
-                    // Set price
                     panel8.Controls.Clear();
                     panel8.Controls.Add(new Label()
                     {
@@ -129,7 +117,6 @@ namespace Project_BD
                 command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@gameId", gameId);
                 reader = command.ExecuteReader();
-
                 panel10.Controls.Clear();
                 while (reader.Read())
                 {
@@ -147,7 +134,6 @@ namespace Project_BD
                 command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@gameId", gameId);
                 reader = command.ExecuteReader();
-
                 panel11.Controls.Clear();
                 while (reader.Read())
                 {
@@ -165,7 +151,6 @@ namespace Project_BD
                 command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@gameId", gameId);
                 reader = command.ExecuteReader();
-
                 panel12.Controls.Clear();
                 while (reader.Read())
                 {
@@ -199,10 +184,10 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT r.descricao_review, u.nome, r.rating, r.data_review
-                                FROM projeto.review r
-                                JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
-                                WHERE r.id_jogo = @gameId";
+                string query = @"SELECT r.id_review, r.descricao_review, u.nome, r.rating, r.data_review
+                                 FROM projeto.review r
+                                 JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+                                 WHERE r.id_jogo = @gameId";
 
                 if (filter == "Friends")
                 {
@@ -228,22 +213,31 @@ namespace Project_BD
 
                 while (reader.Read())
                 {
+                    string reviewId = reader["id_review"].ToString();
+
                     GroupBox reviewBox = new GroupBox();
                     reviewBox.Text = $"{reader["nome"]} - Rating: {reader["rating"]}/5 - {((DateTime)reader["data_review"]).ToString("yyyy-MM-dd")}";
                     reviewBox.Width = panel9.Width - 25;
                     reviewBox.Height = 80;
                     reviewBox.Location = new Point(10, yPos);
-                    yPos += reviewBox.Height + 10;
+                    reviewBox.Tag = reviewId;
+                    reviewBox.Cursor = Cursors.Hand;
+                    reviewBox.Click += ReviewBox_Click;
 
                     Label reviewText = new Label();
                     reviewText.Text = reader["descricao_review"].ToString();
                     reviewText.AutoSize = true;
                     reviewText.MaximumSize = new Size(reviewBox.Width - 20, 0);
                     reviewText.Location = new Point(10, 20);
+                    reviewText.Tag = reviewId;
+                    reviewText.Click += ReviewBox_Click;
 
                     reviewBox.Controls.Add(reviewText);
                     panel9.Controls.Add(reviewBox);
+
+                    yPos += reviewBox.Height + 10;
                 }
+
                 reader.Close();
             }
             catch (Exception ex)
@@ -256,9 +250,25 @@ namespace Project_BD
             }
         }
 
+        private void ReviewBox_Click(object sender, EventArgs e)
+        {
+            string reviewId = "";
+
+            if (sender is Control clickedControl && clickedControl.Tag is string id)
+            {
+                reviewId = id;
+            }
+
+            if (!string.IsNullOrEmpty(reviewId))
+            {
+                
+                ReviewDetails reviewDetailsForm = new ReviewDetails(currentUserId, reviewId);
+                reviewDetailsForm.Show();
+            }
+        }
+
         private void GamePage_Load(object sender, EventArgs e)
         {
-            // Load username in the header
             try
             {
                 cn = getSGBDConnection();
@@ -285,91 +295,32 @@ namespace Project_BD
             }
         }
 
-        private void panel1_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        // Go to user profile
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-            this.Close();
+            this.Hide();
             UserPage userPageForm = new UserPage(currentUserId, currentUserId);
             userPageForm.Show();
         }
 
-        // Game cover load completed
-        private void pictureBox4_LoadCompleted(object sender, AsyncCompletedEventArgs e)
-        {
-            // No action needed
-        }
-
-        // Go back to MainPage
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            this.Close();
+            this.Hide();
             MainPage mainPageForm = new MainPage(currentUserId);
             mainPageForm.Show();
         }
 
-        // Place a review
         private void button1_Click(object sender, EventArgs e)
         {
-            this.Close();
+            this.Hide();
             ReviewPage reviewPageForm = new ReviewPage(currentUserId, gameId);
             reviewPageForm.Show();
         }
 
-        private void panel5_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel6_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel7_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel8_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        // Filter reviews
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             string filter = comboBox1.SelectedItem.ToString();
             LoadReviews(filter);
         }
 
-        private void panel10_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel11_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel9_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel4_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
-
-        private void panel2_Paint(object sender, PaintEventArgs e)
-        {
-            // No action needed
-        }
     }
 }

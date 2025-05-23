@@ -43,25 +43,27 @@
             // 
             this.lblGameTitle.AutoSize = true;
             this.lblGameTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
-            this.lblGameTitle.Location = new System.Drawing.Point(327, 185);
+            this.lblGameTitle.Location = new System.Drawing.Point(218, 120);
+            this.lblGameTitle.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblGameTitle.Name = "lblGameTitle";
-            this.lblGameTitle.Size = new System.Drawing.Size(142, 29);
+            this.lblGameTitle.Size = new System.Drawing.Size(96, 20);
             this.lblGameTitle.TabIndex = 0;
             this.lblGameTitle.Text = "Game Title";
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(327, 235);
+            this.label1.Location = new System.Drawing.Point(218, 153);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(60, 20);
+            this.label1.Size = new System.Drawing.Size(41, 13);
             this.label1.TabIndex = 1;
             this.label1.Text = "Rating:";
             // 
             // numRating
             // 
-            this.numRating.Location = new System.Drawing.Point(440, 232);
-            this.numRating.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.numRating.Location = new System.Drawing.Point(293, 151);
+            this.numRating.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.numRating.Maximum = new decimal(new int[] {
             5,
             0,
@@ -73,7 +75,7 @@
             0,
             0});
             this.numRating.Name = "numRating";
-            this.numRating.Size = new System.Drawing.Size(68, 26);
+            this.numRating.Size = new System.Drawing.Size(45, 20);
             this.numRating.TabIndex = 2;
             this.numRating.Value = new decimal(new int[] {
             3,
@@ -84,9 +86,10 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(327, 285);
+            this.label2.Location = new System.Drawing.Point(218, 185);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(107, 20);
+            this.label2.Size = new System.Drawing.Size(73, 13);
             this.label2.TabIndex = 3;
             this.label2.Text = "Hours Played:";
             // 
@@ -98,41 +101,42 @@
             0,
             0,
             65536});
-            this.numHoursPlayed.Location = new System.Drawing.Point(463, 282);
-            this.numHoursPlayed.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.numHoursPlayed.Location = new System.Drawing.Point(309, 183);
+            this.numHoursPlayed.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.numHoursPlayed.Maximum = new decimal(new int[] {
             1000,
             0,
             0,
             0});
             this.numHoursPlayed.Name = "numHoursPlayed";
-            this.numHoursPlayed.Size = new System.Drawing.Size(90, 26);
+            this.numHoursPlayed.Size = new System.Drawing.Size(60, 20);
             this.numHoursPlayed.TabIndex = 4;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(327, 335);
+            this.label3.Location = new System.Drawing.Point(218, 218);
+            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(64, 20);
+            this.label3.Size = new System.Drawing.Size(46, 13);
             this.label3.TabIndex = 5;
             this.label3.Text = "Review:";
             // 
             // txtReview
             // 
-            this.txtReview.Location = new System.Drawing.Point(327, 372);
-            this.txtReview.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.txtReview.Location = new System.Drawing.Point(218, 242);
+            this.txtReview.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.txtReview.Multiline = true;
             this.txtReview.Name = "txtReview";
-            this.txtReview.Size = new System.Drawing.Size(450, 186);
+            this.txtReview.Size = new System.Drawing.Size(301, 122);
             this.txtReview.TabIndex = 6;
             // 
             // btnSubmit
             // 
-            this.btnSubmit.Location = new System.Drawing.Point(327, 585);
-            this.btnSubmit.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnSubmit.Location = new System.Drawing.Point(218, 380);
+            this.btnSubmit.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.btnSubmit.Name = "btnSubmit";
-            this.btnSubmit.Size = new System.Drawing.Size(135, 50);
+            this.btnSubmit.Size = new System.Drawing.Size(90, 32);
             this.btnSubmit.TabIndex = 7;
             this.btnSubmit.Text = "Submit";
             this.btnSubmit.UseVisualStyleBackColor = true;
@@ -140,10 +144,10 @@
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(485, 585);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnCancel.Location = new System.Drawing.Point(323, 380);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(135, 50);
+            this.btnCancel.Size = new System.Drawing.Size(90, 32);
             this.btnCancel.TabIndex = 8;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -153,10 +157,9 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(1051, 48);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(701, 31);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(102, 25);
+            this.label4.Size = new System.Drawing.Size(73, 17);
             this.label4.TabIndex = 22;
             this.label4.Text = "Username";
             // 
@@ -164,10 +167,9 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F);
-            this.label5.Location = new System.Drawing.Point(25, 48);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Location = new System.Drawing.Point(17, 31);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(226, 47);
+            this.label5.Size = new System.Drawing.Size(149, 31);
             this.label5.TabIndex = 20;
             this.label5.Text = "GameShelf";
             // 
@@ -178,19 +180,17 @@
             this.panel1.Controls.Add(this.pictureBox2);
             this.panel1.Controls.Add(this.label5);
             this.panel1.Controls.Add(this.pictureBox1);
-            this.panel1.Location = new System.Drawing.Point(4, 1);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.panel1.Location = new System.Drawing.Point(3, 1);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1193, 139);
+            this.panel1.Size = new System.Drawing.Size(796, 91);
             this.panel1.TabIndex = 23;
             // 
             // pictureBox2
             // 
             this.pictureBox2.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox2.Image")));
-            this.pictureBox2.Location = new System.Drawing.Point(973, 35);
-            this.pictureBox2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.pictureBox2.Location = new System.Drawing.Point(649, 23);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(66, 60);
+            this.pictureBox2.Size = new System.Drawing.Size(44, 39);
             this.pictureBox2.TabIndex = 21;
             this.pictureBox2.TabStop = false;
             this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
@@ -198,29 +198,27 @@
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(258, 18);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.pictureBox1.Location = new System.Drawing.Point(172, 12);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(111, 100);
+            this.pictureBox1.Size = new System.Drawing.Size(74, 65);
             this.pictureBox1.TabIndex = 19;
             this.pictureBox1.TabStop = false;
             // 
             // pictureBox3
             // 
             this.pictureBox3.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox3.Image")));
-            this.pictureBox3.Location = new System.Drawing.Point(97, 185);
-            this.pictureBox3.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.pictureBox3.Location = new System.Drawing.Point(65, 120);
             this.pictureBox3.Name = "pictureBox3";
-            this.pictureBox3.Size = new System.Drawing.Size(60, 51);
+            this.pictureBox3.Size = new System.Drawing.Size(40, 33);
             this.pictureBox3.TabIndex = 24;
             this.pictureBox3.TabStop = false;
             this.pictureBox3.Click += new System.EventHandler(this.pictureBox3_Click);
             // 
             // ReviewPage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1200, 692);
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.pictureBox3);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnCancel);
@@ -232,7 +230,7 @@
             this.Controls.Add(this.numRating);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lblGameTitle);
-            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.Name = "ReviewPage";
             this.Text = "Write a Review";
             ((System.ComponentModel.ISupportInitialize)(this.numRating)).EndInit();

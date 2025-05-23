@@ -46,7 +46,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddReactionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddReactionForm.Designer.cs">
+      <DependentUpon>AddReactionForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="ConnectionBD.cs" />
+    <Compile Include="CreateListForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CreateListForm.Designer.cs">
+      <DependentUpon>CreateListForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="EditProfileForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -90,6 +102,12 @@
     <Compile Include="RegisterForm.Designer.cs">
       <DependentUpon>RegisterForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ReviewDetails.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ReviewDetails.Designer.cs">
+      <DependentUpon>ReviewDetails.cs</DependentUpon>
+    </Compile>
     <Compile Include="ReviewPage.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -102,6 +120,12 @@
     <Compile Include="UserPage.Designer.cs">
       <DependentUpon>UserPage.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="AddReactionForm.resx">
+      <DependentUpon>AddReactionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CreateListForm.resx">
+      <DependentUpon>CreateListForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="EditProfileForm.resx">
       <DependentUpon>EditProfileForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -124,6 +148,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="RegisterForm.resx">
       <DependentUpon>RegisterForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ReviewDetails.resx">
+      <DependentUpon>ReviewDetails.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ReviewPage.resx">
       <DependentUpon>ReviewPage.cs</DependentUpon>

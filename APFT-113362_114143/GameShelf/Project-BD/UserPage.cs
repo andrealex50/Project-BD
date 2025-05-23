@@ -88,12 +88,16 @@ namespace Project_BD
                         // Create a label for bio
                         if (reader["bio"] != DBNull.Value)
                         {
-                            Label bioLabel = new Label();
-                            bioLabel.Text = reader["bio"].ToString();
-                            bioLabel.AutoSize = true;
-                            bioLabel.Font = new Font("Microsoft Sans Serif", 9);
-                            panel2.Controls.Add(bioLabel);
+                            TextBox bioBox = new TextBox();
+                            bioBox.Text = reader["bio"].ToString();
+                            bioBox.Multiline = true;
+                            bioBox.ReadOnly = true;
+                            bioBox.ScrollBars = ScrollBars.Vertical;
+                            bioBox.Font = new Font("Microsoft Sans Serif", 9);
+                            bioBox.Dock = DockStyle.Fill; // Fills the panel2 area
+                            panel2.Controls.Add(bioBox);
                         }
+
 
                         // Load profile picture if exists
                         if (reader["foto"] != DBNull.Value)
@@ -275,6 +279,7 @@ namespace Project_BD
                 listView3.Items.Clear();
                 listView3.View = View.Details;
                 listView3.Columns.Clear();
+                listView3.FullRowSelect = true;
                 listView3.Columns.Add("ID", 0);
                 listView3.Columns.Add("Name", 200);
 
@@ -287,6 +292,7 @@ namespace Project_BD
                 reader.Close();
 
                 // Update friends count label
+                panel5.Controls.Clear();
                 Label friendsCountLabel = new Label();
                 friendsCountLabel.Text = listView3.Items.Count.ToString();
                 friendsCountLabel.AutoSize = true;
@@ -482,32 +488,65 @@ namespace Project_BD
             if (listView1.SelectedItems.Count > 0)
             {
                 string reviewId = listView1.SelectedItems[0].Tag.ToString();
-                // You could open a detailed review view here if needed
+                ReviewDetails reviewDetails = new ReviewDetails(currentUserId, reviewId);
+                reviewDetails.ShowDialog();
             }
         }
 
         // Show personal Lists
-        private void listView2_SelectedIndexChanged(object sender, EventArgs e)
+        private void listView2_DoubleClick(object sender, EventArgs e)
         {
             if (listView2.SelectedItems.Count > 0)
             {
                 string listId = listView2.SelectedItems[0].Tag.ToString();
-                // You could open a detailed list view here if needed
+
+                try
+                {
+                    using (SqlConnection tempCn = getSGBDConnection())
+                    {
+                        tempCn.Open();
+                        string query = @"SELECT titulo_lista, u.nome 
+                                 FROM projeto.lista l
+                                 JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
+                                 WHERE id_lista = @listId";
+
+                        SqlCommand cmd = new SqlCommand(query, tempCn);
+                        cmd.Parameters.AddWithValue("@listId", listId);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string listTitle = reader["titulo_lista"].ToString();
+                                string creatorName = reader["nome"].ToString();
+
+                                this.Close();
+                                Lista listPage = new Lista(currentUserId, listId, listTitle, creatorName);
+                                listPage.Show();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error opening list: " + ex.Message);
+                }
             }
         }
 
         // Show personal friends
-        private void listView3_SelectedIndexChanged(object sender, EventArgs e)
+        private void listView3_DoubleClick(object sender, EventArgs e)
         {
             if (listView3.SelectedItems.Count > 0)
             {
                 string friendId = listView3.SelectedItems[0].Text;
-                // Open the friend's profile
-                this.Hide();
-                UserPage friendProfile = new UserPage(currentUserId, friendId);
-                friendProfile.Show();
+                this.Hide(); // Better to hide than close
+                UserPage friendPage = new UserPage(currentUserId, friendId);
+                friendPage.Closed += (s, args) => this.Close(); // Close this form when friend page closes
+                friendPage.Show();
             }
         }
+
+
 
         // Show reactions to other reviews
         private void listView4_SelectedIndexChanged(object sender, EventArgs e)
@@ -554,18 +593,30 @@ namespace Project_BD
         // Button to create a list. Go to Lista.cs. Only the user that owns the user account being visited can see this button and therefore create a new list from this page.
         private void button1_Click(object sender, EventArgs e)
         {
-            // Assuming you have a ListForm for creating/editing lists
-            Lista listForm = new Lista(currentUserId, null, null, null);
-            listForm.ShowDialog();
-            LoadUserLists(); // Refresh lists after creating a new one
+            CreateListForm createListForm = new CreateListForm(currentUserId);
+            if (createListForm.ShowDialog() == DialogResult.OK)
+            {
+                // Refresh the lists after creating a new one
+                LoadUserLists();
+            }
         }
 
         // Button to edit the username and bio. Only the user that owns the user account being visited can see this button and therefore update this information.
         private void button2_Click(object sender, EventArgs e)
         {
-            // Get current values from UI
-            string currentName = label1.Text; // or wherever you store/display the name
-            string currentBio = ""; // You'll need to fetch the current bio value if needed
+            // Extract name from panel4
+            string currentName = "";
+            if (panel4.Controls.Count > 0 && panel4.Controls[0] is Label nameLabel)
+            {
+                currentName = nameLabel.Text;
+            }
+
+            // Extract bio from panel2
+            string currentBio = "";
+            if (panel2.Controls.Count > 0 && panel2.Controls[0] is Label bioLabel)
+            {
+                currentBio = bioLabel.Text;
+            }
 
             EditProfileForm editForm = new EditProfileForm(currentUserId, currentName, currentBio);
             if (editForm.ShowDialog() == DialogResult.OK)
@@ -576,6 +627,7 @@ namespace Project_BD
                 LoadUserData();
             }
         }
+
         // This is to calculate the number of friends the user has, and display them
         private void panel5_Paint(object sender, PaintEventArgs e)
         {

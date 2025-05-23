@@ -240,6 +240,7 @@ namespace Project_BD
             this.listView1.FullRowSelect = true;
             this.listView1.View = View.Details;
             this.listView1.MultiSelect = false;
+            this.listView1.DoubleClick += new System.EventHandler(this.listView1_DoubleClick);
             // 
             // button1
             // 

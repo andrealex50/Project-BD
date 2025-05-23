@@ -81,7 +81,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(252, 45);
             this.panel1.TabIndex = 2;
-            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
             // label3
             // 
@@ -154,7 +153,6 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(405, 29);
             this.panel2.TabIndex = 26;
-            this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
             // 
             // pictureBox4
             // 
@@ -163,7 +161,6 @@
             this.pictureBox4.Size = new System.Drawing.Size(295, 400);
             this.pictureBox4.TabIndex = 27;
             this.pictureBox4.TabStop = false;
-            this.pictureBox4.LoadCompleted += new System.ComponentModel.AsyncCompletedEventHandler(this.pictureBox4_LoadCompleted);
             // 
             // panel4
             // 
@@ -171,7 +168,6 @@
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(407, 182);
             this.panel4.TabIndex = 29;
-            this.panel4.Paint += new System.Windows.Forms.PaintEventHandler(this.panel4_Paint);
             // 
             // label2
             // 
@@ -191,7 +187,6 @@
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(114, 23);
             this.panel5.TabIndex = 27;
-            this.panel5.Paint += new System.Windows.Forms.PaintEventHandler(this.panel5_Paint);
             // 
             // label5
             // 
@@ -211,7 +206,6 @@
             this.panel6.Name = "panel6";
             this.panel6.Size = new System.Drawing.Size(82, 24);
             this.panel6.TabIndex = 28;
-            this.panel6.Paint += new System.Windows.Forms.PaintEventHandler(this.panel6_Paint);
             // 
             // label6
             // 
@@ -231,7 +225,6 @@
             this.panel7.Name = "panel7";
             this.panel7.Size = new System.Drawing.Size(112, 25);
             this.panel7.TabIndex = 29;
-            this.panel7.Paint += new System.Windows.Forms.PaintEventHandler(this.panel7_Paint);
             // 
             // label7
             // 
@@ -251,7 +244,6 @@
             this.panel8.Name = "panel8";
             this.panel8.Size = new System.Drawing.Size(86, 26);
             this.panel8.TabIndex = 30;
-            this.panel8.Paint += new System.Windows.Forms.PaintEventHandler(this.panel8_Paint);
             // 
             // button1
             // 
@@ -271,7 +263,6 @@
             this.panel9.Name = "panel9";
             this.panel9.Size = new System.Drawing.Size(274, 236);
             this.panel9.TabIndex = 36;
-            this.panel9.Paint += new System.Windows.Forms.PaintEventHandler(this.panel9_Paint);
             // 
             // label8
             // 
@@ -326,7 +317,6 @@
             this.panel10.Name = "panel10";
             this.panel10.Size = new System.Drawing.Size(105, 25);
             this.panel10.TabIndex = 28;
-            this.panel10.Paint += new System.Windows.Forms.PaintEventHandler(this.panel10_Paint);
             // 
             // panel11
             // 
@@ -336,7 +326,6 @@
             this.panel11.Name = "panel11";
             this.panel11.Size = new System.Drawing.Size(129, 26);
             this.panel11.TabIndex = 42;
-            this.panel11.Paint += new System.Windows.Forms.PaintEventHandler(this.panel11_Paint);
             // 
             // label11
             // 
