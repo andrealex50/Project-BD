@@ -32,6 +32,7 @@ namespace Project_BD
             LoadListData();
             LoadListEntries();
             LoadUserData();
+            listView1.DoubleClick += listView1_DoubleClick;
         }
 
         private SqlConnection getSGBDConnection()
@@ -247,13 +248,6 @@ namespace Project_BD
 
         }
 
-        // Vai para o meu perfil
-        private void pictureBox2_Click(object sender, EventArgs e)
-        {
-            UserPage profileForm = new UserPage(currentUserId, currentUserId);
-            profileForm.Show();
-            this.Hide();
-        } 
         
 
         private void label4_Click(object sender, EventArgs e)
@@ -613,7 +607,7 @@ namespace Project_BD
         }
 
         //Entradas das listas
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        private void listView1_DoubleClick(object sender, EventArgs e)
         {
             try
             {
@@ -633,6 +627,14 @@ namespace Project_BD
             {
                 MessageBox.Show("Error opening game: " + ex.Message);
             }
+        }
+
+        // Vai para o meu perfil
+        private void pictureBox2_Click_1(object sender, EventArgs e)
+        {
+            UserPage profileForm = new UserPage(currentUserId, currentUserId);
+            profileForm.Show();
+            this.Hide();
         }
     }
 }

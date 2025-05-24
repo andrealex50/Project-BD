@@ -103,7 +103,7 @@
             this.listView1.Size = new System.Drawing.Size(748, 250);
             this.listView1.TabIndex = 21;
             this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.SelectedIndexChanged += new System.EventHandler(this.listView1_SelectedIndexChanged);
+            this.listView1.DoubleClick += new System.EventHandler(this.listView1_DoubleClick);
             // 
             // label4
             // 
@@ -150,6 +150,7 @@
             this.pictureBox2.Size = new System.Drawing.Size(44, 39);
             this.pictureBox2.TabIndex = 16;
             this.pictureBox2.TabStop = false;
+            this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click_1);
             // 
             // pictureBox1
             // 
