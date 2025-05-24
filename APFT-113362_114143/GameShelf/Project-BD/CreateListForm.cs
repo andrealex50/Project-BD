@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Data.SqlClient;
 using System.Data;
+using System.Drawing;
 
 namespace Project_BD
 {
@@ -10,11 +11,18 @@ namespace Project_BD
         private string currentUserId;
         private SqlConnection cn;
         public static ConnectionBD bdconnect = new ConnectionBD();
+        private CheckBox chkUsePositions;
 
         public CreateListForm(string userId)
         {
             InitializeComponent();
             currentUserId = userId;
+            this.chkUsePositions = new CheckBox();
+            this.chkUsePositions.AutoSize = true;
+            this.chkUsePositions.Location = new System.Drawing.Point(15, 200);
+            this.chkUsePositions.Text = "Use positions in this list";
+            this.chkUsePositions.Checked = true;
+            this.Controls.Add(this.chkUsePositions);
         }
 
         private SqlConnection getSGBDConnection()
@@ -50,9 +58,9 @@ namespace Project_BD
                 string listId = GenerateListId();
 
                 string query = @"INSERT INTO projeto.lista 
-                        (id_lista, titulo_lista, descricao_lista, visibilidade_lista, id_utilizador)
-                        VALUES 
-                        (@listId, @title, @description, @visibility, @userId)";
+                (id_lista, titulo_lista, descricao_lista, visibilidade_lista, id_utilizador, usa_posicoes)
+                VALUES 
+                (@listId, @title, @description, @visibility, @userId, @usePositions)";
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@listId", listId);
@@ -60,6 +68,7 @@ namespace Project_BD
                 command.Parameters.AddWithValue("@description", string.IsNullOrWhiteSpace(txtDescription.Text) ? DBNull.Value : (object)txtDescription.Text);
                 command.Parameters.AddWithValue("@visibility", rbPublic.Checked ? "Publica" : "Privada");
                 command.Parameters.AddWithValue("@userId", currentUserId);
+                command.Parameters.AddWithValue("@usePositions", chkUsePositions.Checked);
 
                 int rowsAffected = command.ExecuteNonQuery();
 

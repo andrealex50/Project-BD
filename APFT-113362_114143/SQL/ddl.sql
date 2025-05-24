@@ -72,6 +72,9 @@ create table projeto.lista(
 	CONSTRAINT PKLista PRIMARY KEY (id_lista),
 	CONSTRAINT CKLista UNIQUE (titulo_lista)
 );
+-- Adicionar o atriubto posicoes para uma lista ter elementos com posicoes ou nao
+ALTER TABLE projeto.lista
+ADD usa_posicoes BIT NOT NULL DEFAULT 1; -- 1 = usa posicoes, 0 = nao usa posicoes
 
 create table projeto.entrada_lista(
 	id_item varchar(20)					NOT NULL,

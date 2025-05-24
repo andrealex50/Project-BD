@@ -19,6 +19,7 @@ namespace Project_BD
         private string creatorName;
         private SqlConnection cn;
         public static ConnectionBD bdconnect = new ConnectionBD();
+        private bool listUsesPositions = true;
 
         public Lista(string userId, string listId, string listTitle, string creatorName)
         {
@@ -57,13 +58,15 @@ namespace Project_BD
                     return;
 
                 string query = @"SELECT l.descricao_lista, l.visibilidade_lista, 
-                               CASE WHEN l.id_utilizador = @currentUserId THEN 1 ELSE 0 END AS is_owner
-                               FROM projeto.lista l
-                               WHERE l.id_lista = @listId";
+               l.usa_posicoes,  -- Add this
+               CASE WHEN l.id_utilizador = @currentUserId THEN 1 ELSE 0 END AS is_owner
+               FROM projeto.lista l
+               WHERE l.id_lista = @listId";
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@listId", listId);
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
+                
 
                 SqlDataReader reader = command.ExecuteReader();
                 if (reader.Read())
@@ -90,6 +93,8 @@ namespace Project_BD
                     creatorLabel.AutoSize = true;
                     panel3.Controls.Add(creatorLabel);
 
+                    listUsesPositions = Convert.ToBoolean(reader["usa_posicoes"]);
+
                 }
                 reader.Close();
             }
@@ -112,11 +117,11 @@ namespace Project_BD
                     return;
 
                 string query = @"SELECT el.id_item, j.titulo as game_title, j.id_jogo, el.estado, 
-                               el.posicao, el.notas_adicionais, j.capa
-                               FROM projeto.entrada_lista el
-                               JOIN projeto.jogo j ON el.id_jogo = j.id_jogo
-                               WHERE el.id_lista = @listId
-                               ORDER BY el.posicao";
+                el.posicao, el.notas_adicionais, j.capa
+                FROM projeto.entrada_lista el
+                JOIN projeto.jogo j ON el.id_jogo = j.id_jogo
+                WHERE el.id_lista = @listId
+                ORDER BY " + (listUsesPositions ? "el.posicao" : "j.titulo");
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@listId", listId);
@@ -128,20 +133,26 @@ namespace Project_BD
                 listView1.Columns.Clear();
                 listView1.Columns.Add("ID", 0);
                 listView1.Columns.Add("Game ID", 0);
-                listView1.Columns.Add("Position", 50);
+                if (listUsesPositions)
+                {
+                    listView1.Columns.Add("Position", 50);
+                }
                 listView1.Columns.Add("Game Title", 200);
                 listView1.Columns.Add("Status", 100);
                 listView1.Columns.Add("Notes", 150);
+
 
                 while (reader.Read())
                 {
                     ListViewItem item = new ListViewItem(reader["id_item"].ToString());
                     item.SubItems.Add(reader["id_jogo"].ToString());
-                    item.SubItems.Add(reader["posicao"]?.ToString() ?? "");
+                    if (listUsesPositions)
+                    {
+                        item.SubItems.Add(reader["posicao"]?.ToString() ?? "");
+                    }
                     item.SubItems.Add(reader["game_title"].ToString());
                     item.SubItems.Add(reader["estado"].ToString());
                     item.SubItems.Add(reader["notas_adicionais"]?.ToString() ?? "");
-
                     listView1.Items.Add(item);
                 }
                 reader.Close();
@@ -339,6 +350,34 @@ namespace Project_BD
             gamesListView.Columns.Add("Title", 400);
             gamesListView.Columns.Add("Rating", 120);
 
+            NumericUpDown positionControl = null;
+
+            if (listUsesPositions)
+            {
+                Label positionLabel = new Label()
+                {
+                    Text = "Position:",
+                    Left = 20,
+                    Top = 350,
+                    Width = 60,
+                    Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                };
+
+                positionControl = new NumericUpDown()
+                {
+                    Left = 85,
+                    Top = 350,
+                    Width = 60,
+                    Minimum = 1,
+                    Maximum = 1000,
+                    Value = listView1.Items.Count + 1,
+                    Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                };
+
+                popupForm.Controls.Add(positionLabel);
+                popupForm.Controls.Add(positionControl);
+            }
+
             // Bottom controls 
             // Status section
             Label statusLabel = new Label()
@@ -405,8 +444,9 @@ namespace Project_BD
                     string gameId = gamesListView.SelectedItems[0].Text;
                     string status = statusComboBox.SelectedItem.ToString();
                     string notes = notesTextBox.Text;
+                    int? position = listUsesPositions ? (int)positionControl.Value : (int?)null;
 
-                    AddGameToList(gameId, status, notes);
+                    AddGameToList(gameId, status, notes, position);
                     popupForm.Close();
                     LoadListEntries();
                 }
@@ -467,7 +507,7 @@ namespace Project_BD
             }
         }
 
-        private void AddGameToList(string gameId, string status, string notes)
+        private void AddGameToList(string gameId, string status, string notes, int? position = null)
         {
             try
             {
@@ -475,26 +515,26 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                // First get the next position number
-                string positionQuery = @"SELECT ISNULL(MAX(posicao), 0) + 1 
-              FROM projeto.entrada_lista 
-              WHERE id_lista = @listId";
-                SqlCommand positionCmd = new SqlCommand(positionQuery, cn);
-                positionCmd.Parameters.AddWithValue("@listId", listId);
-                int position = (int)positionCmd.ExecuteScalar();
+                if (listUsesPositions && !position.HasValue)
+                {
+                    string positionQuery = @"SELECT ISNULL(MAX(posicao), 0) + 1 
+                          FROM projeto.entrada_lista 
+                          WHERE id_lista = @listId";
+                    SqlCommand positionCmd = new SqlCommand(positionQuery, cn);
+                    positionCmd.Parameters.AddWithValue("@listId", listId);
+                    position = (int)positionCmd.ExecuteScalar();
+                }
 
-                // Generate the unique ID
                 string id_item_ = GenerateUniqueID();
 
-                // Insert the new entry
                 string insertQuery = @"INSERT INTO projeto.entrada_lista 
-             (id_item, estado, posicao, notas_adicionais, id_jogo, id_lista)
-             VALUES 
-             (@id_item, @status, @position, @notes, @gameId, @listId)";
+                            (id_item, estado, posicao, notas_adicionais, id_jogo, id_lista)
+                            VALUES 
+                            (@id_item, @status, @position, @notes, @gameId, @listId)";
                 SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
                 insertCmd.Parameters.AddWithValue("@id_item", id_item_);
                 insertCmd.Parameters.AddWithValue("@status", status);
-                insertCmd.Parameters.AddWithValue("@position", position);
+                insertCmd.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
                 insertCmd.Parameters.AddWithValue("@notes", string.IsNullOrEmpty(notes) ? (object)DBNull.Value : notes);
                 insertCmd.Parameters.AddWithValue("@gameId", gameId);
                 insertCmd.Parameters.AddWithValue("@listId", listId);
@@ -533,6 +573,11 @@ namespace Project_BD
                 MessageBox.Show("Error generating ID: " + ex.Message);
                 return "E" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback with timestamp
             }
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+
         }
     }
 }
