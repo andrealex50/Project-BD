@@ -30,12 +30,13 @@ GO
 CREATE PROCEDURE projeto.sp_SearchLists
     @currentUserId VARCHAR(20),
     @searchText NVARCHAR(100) = NULL,
-    @filterType NVARCHAR(20) = 'All' -- All, Friends, MadeByMods
+    @filterType NVARCHAR(20) = 'All' -- All, Friends, Mine, MadeByMods
 AS
 BEGIN
+    -- Friends filter: Only public lists from users I follow
     IF @filterType = 'Friends'
     BEGIN
-        SELECT l.id_lista, l.titulo_lista, u.nome AS criador
+        SELECT DISTINCT l.id_lista, l.titulo_lista, u.nome AS criador
         FROM projeto.lista l
         JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
         JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
@@ -44,6 +45,7 @@ BEGIN
         AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
         ORDER BY l.titulo_lista;
     END
+    -- MadeByMods filter: All lists from admin (regardless of visibility for admin)
     ELSE IF @filterType = 'MadeByMods'
     BEGIN
         SELECT l.id_lista, l.titulo_lista, u.nome AS criador
@@ -53,33 +55,38 @@ BEGIN
         AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
         ORDER BY l.titulo_lista;
     END
-    ELSE -- All
+    -- Mine filter: Only my lists (both public and private)
+    ELSE IF @filterType = 'Mine'
     BEGIN
-        (SELECT l.id_lista, l.titulo_lista, u.nome AS criador
-        FROM projeto.lista l
-        JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
-        JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
-        WHERE s.id_utilizador_seguidor = @currentUserId 
-        AND l.visibilidade_lista = 'Publica'
-        AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%'))
-        
-        UNION
-        
-        (SELECT l.id_lista, l.titulo_lista, u.nome AS criador
-        FROM projeto.lista l
-        JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
-        WHERE u.nome = 'admin'
-        AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%'))
-        
-        UNION
-        
-        (SELECT l.id_lista, l.titulo_lista, u.nome AS criador
+        SELECT l.id_lista, l.titulo_lista, u.nome AS criador
         FROM projeto.lista l
         JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
         WHERE u.id_utilizador = @currentUserId
-        AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%'))
+        AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
+        ORDER BY l.titulo_lista;
+    END
+    -- Default All filter: All public lists + my private lists
+    ELSE -- All
+    BEGIN
+        -- Public lists from all users
+        SELECT l.id_lista, l.titulo_lista, u.nome AS criador
+        FROM projeto.lista l
+        JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
+        WHERE l.visibilidade_lista = 'Publica'
+        AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
+        
+        UNION
+        
+        -- My private lists
+        SELECT l.id_lista, l.titulo_lista, u.nome AS criador
+        FROM projeto.lista l
+        JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
+        WHERE u.id_utilizador = @currentUserId
+        AND l.visibilidade_lista = 'Privada'
+        AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
         
         ORDER BY titulo_lista;
     END
 END
 GO
+

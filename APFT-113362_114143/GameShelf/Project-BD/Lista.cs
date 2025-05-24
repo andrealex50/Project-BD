@@ -24,13 +24,14 @@ namespace Project_BD
         public Lista(string userId, string listId, string listTitle, string creatorName)
         {
             InitializeComponent();
-            this.currentUserId = userId;
+            currentUserId = userId;
             this.listId = listId;
             this.listTitle = listTitle;
             this.creatorName = creatorName;
-            this.Text = listTitle; 
+            Text = listTitle; 
             LoadListData();
             LoadListEntries();
+            LoadUserData();
         }
 
         private SqlConnection getSGBDConnection()
@@ -101,6 +102,48 @@ namespace Project_BD
             catch (Exception ex)
             {
                 MessageBox.Show("Error loading list data: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
+        private void LoadUserData()
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                string query = "SELECT u.nome, p.foto FROM projeto.utilizador u " +
+                               "LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador " +
+                               "WHERE u.id_utilizador = @userId";
+
+                SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@userId", currentUserId);
+
+                SqlDataReader reader = command.ExecuteReader();
+                if (reader.Read())
+                {
+                    label1.Text = reader["nome"].ToString();
+
+                    // Load profile picture if exists
+                    if (reader["foto"] != DBNull.Value)
+                    {
+                        string imagePath = reader["foto"].ToString();
+                        if (System.IO.File.Exists(imagePath))
+                        {
+                            pictureBox2.Image = Image.FromFile(imagePath);
+                        }
+                    }
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading user data: " + ex.Message);
             }
             finally
             {
@@ -183,11 +226,6 @@ namespace Project_BD
             
         }
 
-        // Entradas de lista
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
 
         // Voltar para a pagina inicial
         private void pictureBox3_Click(object sender, EventArgs e)
@@ -221,46 +259,6 @@ namespace Project_BD
         private void label4_Click(object sender, EventArgs e)
         {
 
-        }
-
-        // Visitar o perfil de quem fez a lista
-        
-        private void button1_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
-
-                string query = @"SELECT id_utilizador FROM projeto.lista WHERE id_lista = @listId";
-                SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@listId", listId);
-
-                object result = command.ExecuteScalar();
-                if (result != null)
-                {
-                    string listOwnerId = result.ToString();
-                    if (listOwnerId != currentUserId)
-                    {
-                        UserPage profileForm = new UserPage(currentUserId, listOwnerId);
-                        profileForm.Show();
-                        this.Hide();
-                    }
-                    else
-                    {
-                        MessageBox.Show("This is your own list.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error getting list owner: " + ex.Message);
-            }
-            finally
-            {
-                cn.Close();
-            }
         }
         
 
@@ -575,9 +573,66 @@ namespace Project_BD
             }
         }
 
+        // Visitar o perfil de quem fez a lista
         private void button1_Click_1(object sender, EventArgs e)
         {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
 
+                string query = @"SELECT id_utilizador FROM projeto.lista WHERE id_lista = @listId";
+                SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@listId", listId);
+
+                object result = command.ExecuteScalar();
+                if (result != null)
+                {
+                    string listOwnerId = result.ToString();
+                    if (listOwnerId != currentUserId)
+                    {
+                        UserPage profileForm = new UserPage(currentUserId, listOwnerId);
+                        profileForm.Show();
+                        this.Hide();
+                    }
+                    else
+                    {
+                        MessageBox.Show("This is your own list.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error getting list owner: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
+        //Entradas das listas
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (listView1.SelectedItems.Count > 0)
+                {
+                    string gameId = listView1.SelectedItems[0].SubItems[1].Text;
+                    if (!string.IsNullOrEmpty(gameId))
+                    {
+                        this.Hide();
+
+                        GamePage gamePage = new GamePage(currentUserId, gameId);
+                        gamePage.Show();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening game: " + ex.Message);
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace Project_BD
 {
     public partial class MainPage : Form
     {
-        private string currentUserId; // Store the logged-in user's ID
+        private readonly string currentUserId; // Store the logged-in user's ID
         private SqlConnection cn;
         public static ConnectionBD bdconnect = new ConnectionBD();
         private string currentGenreFilter = null;
@@ -24,7 +25,11 @@ namespace Project_BD
         public MainPage(String userId)
         {
             InitializeComponent();
+            currentUserId = userId;
 
+            comboBox1.Items.Clear(); // Clear existing items if any
+            comboBox1.Items.AddRange(new string[] { "All", "Friends", "Mine", "MadeByMods" });
+            comboBox1.SelectedIndex = 0;
 
             listView4.FullRowSelect = true;
             listView4.View = View.Details;
@@ -33,7 +38,6 @@ namespace Project_BD
             listView3.FullRowSelect = true;
             listView3.MultiSelect = false;
 
-            currentUserId = userId;
             ApplyListFilters();
             LoadUserData();
             LoadAllGames();
@@ -48,13 +52,20 @@ namespace Project_BD
 
         private bool verifySGBDConnection()
         {
-            if (cn == null)
-                cn = getSGBDConnection();
+            try
+            {
+                if (cn == null)
+                    cn = getSGBDConnection();
 
-            if (cn.State != ConnectionState.Open)
-                cn.Open();
+                if (cn.State != ConnectionState.Open)
+                    cn.Open();
 
-            return cn.State == ConnectionState.Open;
+                return cn.State == ConnectionState.Open;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
 
@@ -145,10 +156,6 @@ namespace Project_BD
             }
         }
 
-        private void LoadUserLists()
-        {
-            ApplyListFilters();
-        }
 
         private void LoadFriends()
         {
@@ -440,8 +447,10 @@ namespace Project_BD
 
         private void ApplyListFilters()
         {
+            
             string searchText = textBox4.Text.Trim();
-            string selectedFilter = comboBox1.SelectedItem?.ToString();
+            string selectedFilter = comboBox1.SelectedItem?.ToString() ?? "All";
+
 
             try
             {
@@ -453,8 +462,10 @@ namespace Project_BD
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
-                command.Parameters.AddWithValue("@searchText", string.IsNullOrEmpty(searchText) ? (object)DBNull.Value : searchText);
-                command.Parameters.AddWithValue("@filterType", selectedFilter ?? "All");
+                command.Parameters.AddWithValue("@searchText",
+                    string.IsNullOrEmpty(searchText) ? DBNull.Value : (object)searchText);
+                command.Parameters.AddWithValue("@filterType", selectedFilter);
+
 
                 SqlDataReader reader = command.ExecuteReader();
 
@@ -482,6 +493,11 @@ namespace Project_BD
             {
                 cn.Close();
             }
+        }
+
+        private void LoadUserLists()
+        {
+            ApplyListFilters();
         }
 
         // Pesquisar por lista
