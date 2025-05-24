@@ -270,15 +270,14 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                // Check if current user is the owner of the list
-                string query = @"SELECT id_utilizador FROM projeto.lista WHERE id_lista = @listId";
+                string query = @"SELECT projeto.fn_IsListOwner(@userId, @listId)";
                 SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@userId", currentUserId);
                 command.Parameters.AddWithValue("@listId", listId);
 
-                object result = command.ExecuteScalar();
-                if (result != null && result.ToString() == currentUserId)
+                bool isOwner = Convert.ToBoolean(command.ExecuteScalar());
+                if (isOwner)
                 {
-                    // User is the owner - show add game popup
                     ShowAddGamePopup();
                 }
                 else
@@ -507,35 +506,22 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                if (listUsesPositions && !position.HasValue)
-                {
-                    string positionQuery = @"SELECT ISNULL(MAX(posicao), 0) + 1 
-                          FROM projeto.entrada_lista 
-                          WHERE id_lista = @listId";
-                    SqlCommand positionCmd = new SqlCommand(positionQuery, cn);
-                    positionCmd.Parameters.AddWithValue("@listId", listId);
-                    position = (int)positionCmd.ExecuteScalar();
-                }
+                SqlCommand command = new SqlCommand("projeto.sp_AddGameToList", cn);
+                command.CommandType = CommandType.StoredProcedure;
 
-                string id_item_ = GenerateUniqueID();
+                command.Parameters.AddWithValue("@listId", listId);
+                command.Parameters.AddWithValue("@gameId", gameId);
+                command.Parameters.AddWithValue("@userId", currentUserId);
+                command.Parameters.AddWithValue("@status", status);
+                command.Parameters.AddWithValue("@notes", string.IsNullOrEmpty(notes) ? (object)DBNull.Value : notes);
+                command.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
 
-                string insertQuery = @"INSERT INTO projeto.entrada_lista 
-                            (id_item, estado, posicao, notas_adicionais, id_jogo, id_lista)
-                            VALUES 
-                            (@id_item, @status, @position, @notes, @gameId, @listId)";
-                SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
-                insertCmd.Parameters.AddWithValue("@id_item", id_item_);
-                insertCmd.Parameters.AddWithValue("@status", status);
-                insertCmd.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
-                insertCmd.Parameters.AddWithValue("@notes", string.IsNullOrEmpty(notes) ? (object)DBNull.Value : notes);
-                insertCmd.Parameters.AddWithValue("@gameId", gameId);
-                insertCmd.Parameters.AddWithValue("@listId", listId);
-
-                int rowsAffected = insertCmd.ExecuteNonQuery();
-                if (rowsAffected > 0)
-                {
-                    MessageBox.Show("Game added to list successfully!");
-                }
+                command.ExecuteNonQuery();
+                MessageBox.Show("Game added to list successfully!");
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
             }
             catch (Exception ex)
             {
@@ -544,26 +530,6 @@ namespace Project_BD
             finally
             {
                 cn.Close();
-            }
-        }
-
-        // Gera algo tipo "E001", "E002"
-        private string GenerateUniqueID()
-        {
-            try
-            {
-                // Count entries for this specific list to avoid conflicts
-                SqlCommand cmd = new SqlCommand(
-                    "SELECT COUNT(*) FROM projeto.entrada_lista WHERE id_lista = @listId",
-                    cn);
-                cmd.Parameters.AddWithValue("@listId", listId);
-                int count = (int)cmd.ExecuteScalar();
-                return "E" + (count + 1).ToString("D3"); // Example: "E001"
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error generating ID: " + ex.Message);
-                return "E" + DateTime.Now.Ticks.ToString().Substring(0, 10); // Fallback with timestamp
             }
         }
 
@@ -576,14 +542,16 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT id_utilizador FROM projeto.lista WHERE id_lista = @listId";
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetListOwner", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@listId", listId);
 
-                object result = command.ExecuteScalar();
-                if (result != null)
+                SqlDataReader reader = command.ExecuteReader();
+                if (reader.Read())
                 {
-                    string listOwnerId = result.ToString();
+                    string listOwnerId = reader["id_utilizador"].ToString();
+                    reader.Close();
+
                     if (listOwnerId != currentUserId)
                     {
                         UserPage profileForm = new UserPage(currentUserId, listOwnerId);
@@ -594,6 +562,10 @@ namespace Project_BD
                     {
                         MessageBox.Show("This is your own list.");
                     }
+                }
+                else
+                {
+                    reader.Close();
                 }
             }
             catch (Exception ex)

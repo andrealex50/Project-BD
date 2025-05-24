@@ -147,13 +147,5 @@ namespace Project_BD
                 return builder.ToString();
             }
         }
-
-        // Gera algo tipo "U001", "U002"
-        private string GenerateUniqueID()
-        {
-            SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM projeto.utilizador", cn);
-            int count = (int)cmd.ExecuteScalar();
-            return "U" + (count + 1).ToString("D3");
-        }
     }
 }

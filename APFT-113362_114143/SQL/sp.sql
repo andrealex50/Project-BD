@@ -1,4 +1,3 @@
--- Drop SPs if they exist
 DROP PROCEDURE IF EXISTS projeto.sp_SearchGames;
 DROP PROCEDURE IF EXISTS projeto.sp_SearchLists;
 DROP PROCEDURE IF EXISTS projeto.sp_ManageReaction;
@@ -7,6 +6,13 @@ DROP PROCEDURE IF EXISTS projeto.sp_CreateList;
 DROP PROCEDURE IF EXISTS projeto.sp_UpdateUserProfile;
 DROP PROCEDURE IF EXISTS projeto.sp_SearchUsers;
 DROP PROCEDURE IF EXISTS projeto.sp_GetGameStats;
+DROP PROCEDURE IF EXISTS projeto.sp_AddGameToList;
+DROP PROCEDURE IF EXISTS projeto.sp_GetListOwner;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserStatistics;
+DROP PROCEDURE IF EXISTS projeto.sp_GetGameDetails;
+DROP PROCEDURE IF EXISTS projeto.sp_CheckUserGameReview;
+DROP PROCEDURE IF EXISTS projeto.sp_GetGameWithRelatedData;
+DROP PROCEDURE IF EXISTS projeto.sp_GetFilteredGameReviews;
 GO
 
 
@@ -63,6 +69,7 @@ BEGIN
         FROM projeto.lista l
         JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
         WHERE u.nome = 'adminmod'
+		AND l.visibilidade_lista = 'Publica'
         AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
         ORDER BY l.titulo_lista;
     END
@@ -204,7 +211,7 @@ BEGIN
 END
 GO
 
--- SP for Game Statistics
+-- SP para estatisticas do jogo
 CREATE PROCEDURE projeto.sp_GetGameStats
     @gameId VARCHAR(20)
 AS
@@ -217,3 +224,206 @@ BEGIN
     FROM projeto.review r
     WHERE r.id_jogo = @gameId;
 END
+GO
+
+
+---- LIST PAGE ----
+
+-- SP para adicionar jogo a uma lista
+CREATE PROCEDURE projeto.sp_AddGameToList
+    @listId VARCHAR(20),
+    @gameId VARCHAR(20),
+    @userId VARCHAR(20),
+    @status VARCHAR(15),
+    @notes VARCHAR(100) = NULL,
+    @position INT = NULL
+AS
+BEGIN
+    IF projeto.fn_IsListOwner(@userId, @listId) = 0
+    BEGIN
+        RAISERROR('Only the list owner can add games to this list', 16, 1);
+        RETURN;
+    END
+    
+    IF EXISTS (SELECT 1 FROM projeto.entrada_lista WHERE id_lista = @listId AND id_jogo = @gameId)
+    BEGIN
+        RAISERROR('Game already exists in this list', 16, 1);
+        RETURN;
+    END
+    
+    DECLARE @entryId VARCHAR(20) = projeto.fn_GenerateEntryId(@listId);
+    DECLARE @listUsesPositions BIT;
+    
+    SELECT @listUsesPositions = usa_posicoes FROM projeto.lista WHERE id_lista = @listId;
+
+    IF @listUsesPositions = 1 AND @position IS NULL
+    BEGIN
+        SELECT @position = ISNULL(MAX(posicao), 0) + 1 
+        FROM projeto.entrada_lista 
+        WHERE id_lista = @listId;
+    END
+    
+    INSERT INTO projeto.entrada_lista 
+    (id_item, estado, posicao, notas_adicionais, id_jogo, id_lista)
+    VALUES 
+    (@entryId, @status, @position, @notes, @gameId, @listId);
+END
+GO
+
+-- SP para obter informação sobre o dono da lista
+CREATE PROCEDURE projeto.sp_GetListOwner
+    @listId VARCHAR(20)
+AS
+BEGIN
+    SELECT u.id_utilizador, u.nome
+    FROM projeto.lista l
+    JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
+    WHERE l.id_lista = @listId;
+END
+GO
+
+
+---- MAIN PAGE ----
+
+-- SP para obter estatisticas do utilizador
+CREATE PROCEDURE projeto.sp_GetUserStatistics
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        u.nome,
+        u.email,
+        p.bio,
+        p.foto,
+        stats.games_reviewed,
+        stats.lists_created,
+        stats.following_count,
+        stats.followers_count
+    FROM projeto.utilizador u
+    LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
+    CROSS APPLY projeto.fn_GetUserStats(@userId) stats
+    WHERE u.id_utilizador = @userId;
+END
+GO
+
+-- SP para obter detalhes do jogo com rating
+CREATE PROCEDURE projeto.sp_GetGameDetails
+    @gameId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        j.id_jogo,
+        j.titulo,
+        j.data_lancamento,
+        j.sinopse,
+        j.capa,
+        j.rating_medio,
+        j.tempo_medio_gameplay,
+        j.preco,
+        stats.total_reviews,
+        stats.avg_rating,
+        stats.unique_reviewers,
+        stats.avg_hours_played
+    FROM projeto.jogo j
+    CROSS APPLY (
+        SELECT 
+            COUNT(r.id_review) as total_reviews,
+            AVG(CAST(r.rating AS FLOAT)) as avg_rating,
+            COUNT(DISTINCT r.id_utilizador) as unique_reviewers,
+            AVG(r.horas_jogadas) as avg_hours_played
+        FROM projeto.review r
+        WHERE r.id_jogo = @gameId
+    ) stats
+    WHERE j.id_jogo = @gameId;
+END
+GO
+
+-- SP para verificar se o utilizador já deu review ao jogo
+CREATE PROCEDURE projeto.sp_CheckUserGameReview
+    @userId VARCHAR(20),
+    @gameId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        r.id_review,
+        r.rating,
+        r.descricao_review,
+        r.horas_jogadas,
+        r.data_review
+    FROM projeto.review r
+    WHERE r.id_utilizador = @userId AND r.id_jogo = @gameId;
+END
+GO
+
+
+---- GAME PAGE ----
+
+CREATE PROCEDURE projeto.sp_GetGameWithRelatedData
+    @gameId VARCHAR(20)
+AS
+BEGIN
+    -- Game details
+    SELECT 
+        j.id_jogo,
+        j.titulo,
+        j.data_lancamento,
+        j.sinopse,
+        j.capa,
+        j.rating_medio,
+        j.tempo_medio_gameplay,
+        j.preco
+    FROM projeto.jogo j
+    WHERE j.id_jogo = @gameId;
+    
+    -- Genres
+    SELECT g.nome 
+    FROM projeto.genero g 
+    WHERE g.id_jogo = @gameId;
+    
+    -- Developers
+    SELECT d.nome 
+    FROM projeto.desenvolvedor d 
+    WHERE d.id_jogo = @gameId;
+    
+    -- Platforms
+    SELECT p.sigla 
+    FROM projeto.plataforma p 
+    WHERE p.id_jogo = @gameId;
+END
+GO
+
+
+CREATE PROCEDURE projeto.sp_GetFilteredGameReviews
+    @gameId VARCHAR(20),
+    @currentUserId VARCHAR(20),
+    @filter VARCHAR(20) = 'All' -- All, Friends, MadeByMods
+AS
+BEGIN
+    IF @filter = 'Friends'
+    BEGIN
+        SELECT r.id_review, r.descricao_review, u.nome, r.rating, r.data_review
+        FROM projeto.review r
+        JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+        WHERE r.id_jogo = @gameId
+        AND projeto.fn_IsFriend(@currentUserId, r.id_utilizador) = 1
+        ORDER BY r.data_review DESC;
+    END
+    ELSE IF @filter = 'MadeByMods'
+    BEGIN
+        SELECT r.id_review, r.descricao_review, u.nome, r.rating, r.data_review
+        FROM projeto.review r
+        JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+        WHERE r.id_jogo = @gameId
+        AND u.nome = 'adminmod'
+        ORDER BY r.data_review DESC;
+    END
+    ELSE -- All
+    BEGIN
+        SELECT r.id_review, r.descricao_review, u.nome, r.rating, r.data_review
+        FROM projeto.review r
+        JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+        WHERE r.id_jogo = @gameId
+        ORDER BY r.data_review DESC;
+    END
+END
+GO

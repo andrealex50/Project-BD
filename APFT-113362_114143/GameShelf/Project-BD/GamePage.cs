@@ -46,12 +46,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT j.titulo, j.data_lancamento, j.sinopse, j.capa, 
-                                j.rating_medio, j.tempo_medio_gameplay, j.preco
-                                FROM projeto.jogo j
-                                WHERE j.id_jogo = @gameId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetGameDetails", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@gameId", gameId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -109,11 +105,12 @@ namespace Project_BD
                         Text = reader["preco"].ToString() + " €",
                         AutoSize = true
                     });
+
                 }
                 reader.Close();
 
                 // Load genres
-                query = @"SELECT g.nome FROM projeto.genero g WHERE g.id_jogo = @gameId";
+                string query = @"SELECT g.nome FROM projeto.genero g WHERE g.id_jogo = @gameId";
                 command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@gameId", gameId);
                 reader = command.ExecuteReader();
@@ -129,7 +126,7 @@ namespace Project_BD
                 }
                 reader.Close();
 
-                // Load developers
+                // Load developers 
                 query = @"SELECT d.nome FROM projeto.desenvolvedor d WHERE d.id_jogo = @gameId";
                 command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@gameId", gameId);
@@ -146,7 +143,7 @@ namespace Project_BD
                 }
                 reader.Close();
 
-                // Load platforms
+                // Load platforms 
                 query = @"SELECT p.sigla FROM projeto.plataforma p WHERE p.id_jogo = @gameId";
                 command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@gameId", gameId);
@@ -185,20 +182,18 @@ namespace Project_BD
                     return;
 
                 string query = @"SELECT r.id_review, r.descricao_review, u.nome, r.rating, r.data_review
-                                 FROM projeto.review r
-                                 JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
-                                 WHERE r.id_jogo = @gameId";
+                         FROM projeto.review r
+                         JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+                         WHERE r.id_jogo = @gameId";
 
                 if (filter == "Friends")
                 {
+                    // Use the UDF to check friendship
                     query += @" AND projeto.fn_IsFriend(@currentUserId, r.id_utilizador) = 1";
                 }
                 else if (filter == "Made by Mods")
                 {
-                    query += @" AND EXISTS (
-                                SELECT 1 FROM projeto.utilizador u 
-                                WHERE u.id_utilizador = r.id_utilizador AND u.nome LIKE '%Mod%'
-                              )";
+                    query += @" AND u.nome = 'adminmod'";
                 }
 
                 SqlCommand command = new SqlCommand(query, cn);
@@ -309,8 +304,41 @@ namespace Project_BD
             mainPageForm.Show();
         }
 
+        private bool CanUserReview()
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return false;
+
+                string query = "SELECT projeto.fn_CanUserReviewGame(@userId, @gameId)";
+                SqlCommand command = new SqlCommand(query, cn);
+                command.Parameters.AddWithValue("@userId", currentUserId);
+                command.Parameters.AddWithValue("@gameId", gameId);
+
+                object result = command.ExecuteScalar();
+                return result != null && (bool)result;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error checking review permission: " + ex.Message);
+                return false;
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
+            if (!CanUserReview())
+            {
+                MessageBox.Show("You have already reviewed this game!");
+                return;
+            }
+
             this.Hide();
             ReviewPage reviewPageForm = new ReviewPage(currentUserId, gameId);
             reviewPageForm.Show();

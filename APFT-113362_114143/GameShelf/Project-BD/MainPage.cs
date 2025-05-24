@@ -77,11 +77,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = "SELECT u.nome, p.foto FROM projeto.utilizador u " +
-                               "LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador " +
-                               "WHERE u.id_utilizador = @userId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserStatistics", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", currentUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -165,14 +162,26 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT u.id_utilizador, u.nome 
-                              FROM projeto.utilizador u
-                              WHERE projeto.fn_IsFriend(@currentUserId, u.id_utilizador) = 1";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_SearchUsers", cn);
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@searchText", DBNull.Value);
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
+                command.Parameters.AddWithValue("@excludeFollowed", 1); // Only show users not followed
 
                 SqlDataReader reader = command.ExecuteReader();
+
+                // Get only the friends (is_following = 1)
+                string friendQuery = @"SELECT u.id_utilizador, u.nome 
+                              FROM projeto.utilizador u
+                              JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
+                              WHERE s.id_utilizador_seguidor = @currentUserId";
+
+                reader.Close();
+
+                SqlCommand friendCommand = new SqlCommand(friendQuery, cn);
+                friendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
+
+                SqlDataReader friendReader = friendCommand.ExecuteReader();
 
                 listView3.Items.Clear();
                 listView3.View = View.Details;
@@ -180,13 +189,13 @@ namespace Project_BD
                 listView3.Columns.Add("ID", 0);
                 listView3.Columns.Add("Name", 200);
 
-                while (reader.Read())
+                while (friendReader.Read())
                 {
-                    ListViewItem item = new ListViewItem(reader["id_utilizador"].ToString());
-                    item.SubItems.Add(reader["nome"].ToString());
+                    ListViewItem item = new ListViewItem(friendReader["id_utilizador"].ToString());
+                    item.SubItems.Add(friendReader["nome"].ToString());
                     listView3.Items.Add(item);
                 }
-                reader.Close();
+                friendReader.Close();
             }
             catch (Exception ex)
             {
@@ -378,17 +387,23 @@ namespace Project_BD
         {
             string searchText = textBox2.Text.Trim();
 
+            if (string.IsNullOrEmpty(searchText) || searchText == "Search for friend...")
+            {
+                LoadFriends(); // Load all friends when search is empty
+                return;
+            }
+
             try
             {
                 cn = getSGBDConnection();
                 if (!verifySGBDConnection())
                     return;
 
-                // Usando a UDF fn_IsFriend na pesquisa
                 string query = @"SELECT u.id_utilizador, u.nome 
-                              FROM projeto.utilizador u
-                              WHERE projeto.fn_IsFriend(@currentUserId, u.id_utilizador) = 1
-                              AND u.nome LIKE @searchText";
+                        FROM projeto.utilizador u
+                        JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
+                        WHERE s.id_utilizador_seguidor = @currentUserId
+                        AND u.nome LIKE @searchText";
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
@@ -407,7 +422,7 @@ namespace Project_BD
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Erro ao pesquisar amigos: " + ex.Message);
+                MessageBox.Show("Error searching friends: " + ex.Message);
             }
             finally
             {
@@ -522,41 +537,46 @@ namespace Project_BD
         {
             string searchText = textBox3.Text.Trim();
 
+            if (string.IsNullOrEmpty(searchText) || searchText == "Search for user...")
+            {
+                listView4.Items.Clear();
+                return;
+            }
+
             try
             {
                 cn = getSGBDConnection();
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT u.id_utilizador, u.nome, p.foto 
-                        FROM projeto.utilizador u
-                        LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
-                        WHERE u.nome LIKE @searchText AND u.id_utilizador != @currentUserId";
-
-                SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@searchText", "%" + searchText + "%");
+                // Use the stored procedure for user search
+                SqlCommand command = new SqlCommand("projeto.sp_SearchUsers", cn);
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@searchText", searchText);
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
+                command.Parameters.AddWithValue("@excludeFollowed", 0); // Show all users
 
                 SqlDataReader reader = command.ExecuteReader();
 
                 listView4.Items.Clear();
                 listView4.View = View.Details;
                 listView4.Columns.Clear();
-                listView4.Columns.Add("ID", 0); 
-                listView4.Columns.Add("Name", 200);
+                listView4.Columns.Add("ID", 0);
+                listView4.Columns.Add("Name", 150);
+                listView4.Columns.Add("Following", 80);
 
                 while (reader.Read())
                 {
                     ListViewItem item = new ListViewItem(reader["id_utilizador"].ToString());
                     item.SubItems.Add(reader["nome"].ToString());
-
+                    item.SubItems.Add(Convert.ToBoolean(reader["is_following"]) ? "Yes" : "No");
                     listView4.Items.Add(item);
                 }
                 reader.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Erro ao pesquisar utilizadores: " + ex.Message);
+                MessageBox.Show("Error searching users: " + ex.Message);
             }
             finally
             {
@@ -575,30 +595,6 @@ namespace Project_BD
                 this.Hide();
                 UserPage userPageForm = new UserPage(currentUserId, selectedUserId);
                 userPageForm.Show();
-            }
-        }
-
-        // Adiciona o utilizador selecionado no listView4_SelectedIndexChanged
-        private void button2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void textBox1_Enter(object sender, EventArgs e)
-        {
-            if (textBox1.Text == "Search for game...")
-            {
-                textBox1.Text = "";
-                textBox1.ForeColor = SystemColors.WindowText; // Reset to default text color
-            }
-        }
-
-        private void textBox1_Leave(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(textBox1.Text))
-            {
-                textBox1.Text = "Search for game...";
-                textBox1.ForeColor = SystemColors.GrayText;
             }
         }
 
@@ -625,11 +621,6 @@ namespace Project_BD
             }
         }
 
-        private void textBox2_Leave(object sender, EventArgs e)
-        {
-
-        }
-
         private void textBox3_Enter(object sender, EventArgs e)
         {
             if (textBox3.Text == "Search for user...")
@@ -637,11 +628,6 @@ namespace Project_BD
                 textBox3.Text = "";
                 textBox3.ForeColor = SystemColors.WindowText;
             }
-        }
-
-        private void textBox3_Leave(object sender, EventArgs e)
-        {
-
         }
 
         private void textBox4_Enter(object sender, EventArgs e)
@@ -653,9 +639,5 @@ namespace Project_BD
             }
         }
 
-        private void textBox4_Leave(object sender, EventArgs e)
-        {
-
-        }
     }
 }

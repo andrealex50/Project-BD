@@ -607,9 +607,9 @@ namespace Project_BD
             // Extract name from panel4
             string currentName = "";
             if (panel4.Controls.Count > 0 && panel4.Controls[0] is Label nameLabel)
-            {
+                {
                 currentName = nameLabel.Text;
-            }
+                }
 
             // Extract bio from panel2
             string currentBio = "";
