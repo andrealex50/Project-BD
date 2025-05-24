@@ -1,5 +1,16 @@
--- SP para Pesquisa de Jogos com Filtros
+-- Drop SPs if they exist
+DROP PROCEDURE IF EXISTS projeto.sp_SearchGames;
+DROP PROCEDURE IF EXISTS projeto.sp_SearchLists;
+DROP PROCEDURE IF EXISTS projeto.sp_ManageReaction;
+DROP PROCEDURE IF EXISTS projeto.sp_GetReaction;
+DROP PROCEDURE IF EXISTS projeto.sp_CreateList;
+DROP PROCEDURE IF EXISTS projeto.sp_UpdateUserProfile;
+DROP PROCEDURE IF EXISTS projeto.sp_SearchUsers;
+DROP PROCEDURE IF EXISTS projeto.sp_GetGameStats;
+GO
 
+
+-- SP para Pesquisa de Jogos com Filtros
 CREATE PROCEDURE projeto.sp_SearchGames
     @searchText NVARCHAR(100) = NULL,
     @genre NVARCHAR(50) = NULL,

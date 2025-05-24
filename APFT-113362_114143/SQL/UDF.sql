@@ -1,3 +1,8 @@
+DROP FUNCTION IF EXISTS projeto.fn_CalculateGameRating;
+DROP FUNCTION IF EXISTS projeto.fn_IsFriend;
+DROP FUNCTION IF EXISTS projeto.fn_GetUserStats;
+GO
+
 -- UDF para Calcular Rating Médio de um Jogo
 CREATE FUNCTION projeto.fn_CalculateGameRating
 (
