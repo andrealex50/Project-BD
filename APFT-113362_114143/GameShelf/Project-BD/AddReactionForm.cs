@@ -33,10 +33,9 @@ namespace Project_BD
                 if (cn.State != ConnectionState.Open)
                     cn.Open();
 
-                string query = @"SELECT reacao_texto FROM projeto.reage_a
-                                 WHERE id_utilizador = @userId AND id_review = @reviewId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                
+                SqlCommand command = new SqlCommand("projeto.sp_GetReaction", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", userId);
                 command.Parameters.AddWithValue("@reviewId", reviewId);
 
@@ -77,37 +76,12 @@ namespace Project_BD
                 if (cn.State != ConnectionState.Open)
                     cn.Open();
 
-                // Check if reaction already exists
-                string checkQuery = @"SELECT COUNT(*) FROM projeto.reage_a 
-                                      WHERE id_utilizador = @userId AND id_review = @reviewId";
-
-                SqlCommand checkCommand = new SqlCommand(checkQuery, cn);
-                checkCommand.Parameters.AddWithValue("@userId", userId);
-                checkCommand.Parameters.AddWithValue("@reviewId", reviewId);
-
-                int reactionExists = (int)checkCommand.ExecuteScalar();
-
-                string query;
-
-                if (reactionExists > 0)
-                {
-                    // Update existing reaction
-                    query = @"UPDATE projeto.reage_a 
-                              SET reacao_texto = @reaction, reacao_data = GETDATE()
-                              WHERE id_utilizador = @userId AND id_review = @reviewId";
-                }
-                else
-                {
-                    // Insert new reaction
-                    query = @"INSERT INTO projeto.reage_a 
-                              (id_utilizador, id_review, reacao_texto, reacao_data)
-                              VALUES (@userId, @reviewId, @reaction, GETDATE())";
-                }
-
-                SqlCommand command = new SqlCommand(query, cn);
+                
+                SqlCommand command = new SqlCommand("projeto.sp_ManageReaction", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", userId);
                 command.Parameters.AddWithValue("@reviewId", reviewId);
-                command.Parameters.AddWithValue("@reaction", txtReaction.Text);
+                command.Parameters.AddWithValue("@reactionText", txtReaction.Text);
 
                 int rowsAffected = command.ExecuteNonQuery();
 
@@ -132,6 +106,7 @@ namespace Project_BD
         private void btnCancel_Click(object sender, EventArgs e)
         {
             this.DialogResult = DialogResult.Cancel;
+            this.Close();
         }
     }
 }
