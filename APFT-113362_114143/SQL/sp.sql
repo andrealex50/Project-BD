@@ -90,3 +90,81 @@ BEGIN
 END
 GO
 
+-- SP para dar manage as reacoes
+CREATE PROCEDURE projeto.sp_ManageReaction
+    @userId VARCHAR(20),
+    @reviewId VARCHAR(20),
+    @reactionText VARCHAR(200)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM projeto.reage_a 
+              WHERE id_utilizador = @userId AND id_review = @reviewId)
+    BEGIN
+        UPDATE projeto.reage_a 
+        SET reacao_texto = @reactionText, reacao_data = GETDATE()
+        WHERE id_utilizador = @userId AND id_review = @reviewId;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO projeto.reage_a 
+        (id_utilizador, id_review, reacao_texto, reacao_data)
+        VALUES (@userId, @reviewId, @reactionText, GETDATE());
+    END
+END
+
+--SP para recolher reacoes
+CREATE PROCEDURE projeto.sp_GetReaction
+    @userId VARCHAR(20),
+    @reviewId VARCHAR(20)
+AS
+BEGIN
+    SELECT reacao_texto 
+    FROM projeto.reage_a
+    WHERE id_utilizador = @userId AND id_review = @reviewId;
+END
+
+--SP para criar listas
+CREATE PROCEDURE projeto.sp_CreateList
+    @listId VARCHAR(20),
+    @title VARCHAR(30),
+    @description VARCHAR(200) = NULL,
+    @visibility VARCHAR(7) = 'Publica',
+    @userId VARCHAR(20),
+    @usePositions BIT = 1
+AS
+BEGIN
+    INSERT INTO projeto.lista 
+    (id_lista, titulo_lista, descricao_lista, visibilidade_lista, id_utilizador, usa_posicoes)
+    VALUES 
+    (@listId, @title, @description, @visibility, @userId, @usePositions);
+    
+    RETURN SCOPE_IDENTITY();
+END
+
+--SP para atualizar o profile
+CREATE PROCEDURE projeto.sp_UpdateUserProfile
+    @userId VARCHAR(20),
+    @name VARCHAR(50),
+    @bio VARCHAR(200) = NULL
+AS
+BEGIN
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        -- Update user name
+        UPDATE projeto.utilizador 
+        SET nome = @name 
+        WHERE id_utilizador = @userId;
+        
+        -- Update or insert bio
+        IF EXISTS (SELECT 1 FROM projeto.perfil WHERE utilizador = @userId)
+            UPDATE projeto.perfil SET bio = @bio WHERE utilizador = @userId;
+        ELSE
+            INSERT INTO projeto.perfil (bio, utilizador) VALUES (@bio, @userId);
+            
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END

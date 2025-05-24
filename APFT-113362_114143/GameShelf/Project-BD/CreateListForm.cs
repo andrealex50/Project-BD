@@ -57,12 +57,9 @@ namespace Project_BD
 
                 string listId = GenerateListId();
 
-                string query = @"INSERT INTO projeto.lista 
-                (id_lista, titulo_lista, descricao_lista, visibilidade_lista, id_utilizador, usa_posicoes)
-                VALUES 
-                (@listId, @title, @description, @visibility, @userId, @usePositions)";
 
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_CreateList", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@listId", listId);
                 command.Parameters.AddWithValue("@title", txtTitle.Text);
                 command.Parameters.AddWithValue("@description", string.IsNullOrWhiteSpace(txtDescription.Text) ? DBNull.Value : (object)txtDescription.Text);
