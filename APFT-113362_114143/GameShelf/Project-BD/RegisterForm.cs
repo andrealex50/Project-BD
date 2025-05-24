@@ -51,6 +51,11 @@ namespace Project_BD
                 return;
             }
 
+            if (name == "adminmod") {
+                MessageBox.Show("That username is not available");
+                return;
+            }
+
             if (password != confirmPassword)
             {
                 MessageBox.Show("Passwords do not match.");

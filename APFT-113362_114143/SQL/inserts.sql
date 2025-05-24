@@ -39,7 +39,7 @@ INSERT INTO projeto.utilizador (id_utilizador, nome, email, [password]) VALUES
 ('U007', 'miguelro', 'miguel.rocha@example.com', CONVERT(varchar(255), HASHBYTES('SHA2_256', 'miguelrocha007'), 2)),
 ('U008', 'beatrizli', 'beatriz.lima@example.com', CONVERT(varchar(255), HASHBYTES('SHA2_256', 'beatrizlima008'), 2)),
 ('U009', 'andrematos', 'andre.matos@example.com', CONVERT(varchar(255), HASHBYTES('SHA2_256', 'andrematos009'), 2)),
-('U010', 'admin', 'admin@example.com', CONVERT(varchar(255), HASHBYTES('SHA2_256', 'admin'), 2));
+('U010', 'adminmod', 'admin@example.com', CONVERT(varchar(255), HASHBYTES('SHA2_256', 'admin'), 2));
 
 SELECT * FROM projeto.utilizador;  -- testar
 

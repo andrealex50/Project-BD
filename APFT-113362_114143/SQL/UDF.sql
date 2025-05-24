@@ -3,7 +3,7 @@ CREATE FUNCTION projeto.fn_CalculateGameRating
 (
     @gameId VARCHAR(20)
 )
-RETURNS DECIMAL(3,2)
+RETURNS INT
 AS
 BEGIN
     DECLARE @avgRating DECIMAL(3,2);
@@ -41,3 +41,24 @@ BEGIN
 END
 GO
 
+-- UDF para estatisticas do utilizador
+CREATE FUNCTION projeto.fn_GetUserStats
+(
+    @userId VARCHAR(20)
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        COUNT(DISTINCT r.id_jogo) as games_reviewed,
+        COUNT(DISTINCT l.id_lista) as lists_created,
+        COUNT(DISTINCT s1.id_utilizador_seguido) as following_count,
+        COUNT(DISTINCT s2.id_utilizador_seguidor) as followers_count
+    FROM projeto.utilizador u
+    LEFT JOIN projeto.review r ON u.id_utilizador = r.id_utilizador
+    LEFT JOIN projeto.lista l ON u.id_utilizador = l.id_utilizador
+    LEFT JOIN projeto.segue s1 ON u.id_utilizador = s1.id_utilizador_seguidor
+    LEFT JOIN projeto.segue s2 ON u.id_utilizador = s2.id_utilizador_seguido
+    WHERE u.id_utilizador = @userId
+);

@@ -45,13 +45,13 @@ BEGIN
         AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
         ORDER BY l.titulo_lista;
     END
-    -- MadeByMods filter: All lists from admin (regardless of visibility for admin)
+    -- MadeByMods filter: All lists from admin 
     ELSE IF @filterType = 'MadeByMods'
     BEGIN
         SELECT l.id_lista, l.titulo_lista, u.nome AS criador
         FROM projeto.lista l
         JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
-        WHERE u.nome = 'admin'
+        WHERE u.nome = 'adminmod'
         AND (@searchText IS NULL OR l.titulo_lista LIKE '%' + @searchText + '%')
         ORDER BY l.titulo_lista;
     END
@@ -111,6 +111,7 @@ BEGIN
         VALUES (@userId, @reviewId, @reactionText, GETDATE());
     END
 END
+GO
 
 --SP para recolher reacoes
 CREATE PROCEDURE projeto.sp_GetReaction
@@ -122,6 +123,7 @@ BEGIN
     FROM projeto.reage_a
     WHERE id_utilizador = @userId AND id_review = @reviewId;
 END
+GO
 
 --SP para criar listas
 CREATE PROCEDURE projeto.sp_CreateList
@@ -140,6 +142,7 @@ BEGIN
     
     RETURN SCOPE_IDENTITY();
 END
+GO
 
 --SP para atualizar o profile
 CREATE PROCEDURE projeto.sp_UpdateUserProfile
@@ -167,4 +170,39 @@ BEGIN
         ROLLBACK TRANSACTION;
         THROW;
     END CATCH
+END
+GO
+
+-- SP para pesquisar pelo utilizador
+CREATE PROCEDURE projeto.sp_SearchUsers
+    @searchText NVARCHAR(100) = NULL,
+    @currentUserId VARCHAR(20),
+    @excludeFollowed BIT = 0
+AS
+BEGIN
+    SELECT u.id_utilizador, u.nome, p.foto,
+           CASE WHEN s.id_utilizador_seguido IS NOT NULL THEN 1 ELSE 0 END AS is_following
+    FROM projeto.utilizador u
+    LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
+    LEFT JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido 
+                              AND s.id_utilizador_seguidor = @currentUserId
+    WHERE u.id_utilizador != @currentUserId
+    AND (@searchText IS NULL OR u.nome LIKE '%' + @searchText + '%')
+    AND (@excludeFollowed = 0 OR s.id_utilizador_seguido IS NULL)
+    ORDER BY u.nome;
+END
+GO
+
+-- SP for Game Statistics
+CREATE PROCEDURE projeto.sp_GetGameStats
+    @gameId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        COUNT(r.id_review) as total_reviews,
+        AVG(CAST(r.rating AS FLOAT)) as avg_rating,
+        COUNT(DISTINCT r.id_utilizador) as unique_reviewers,
+        AVG(r.horas_jogadas) as avg_hours_played
+    FROM projeto.review r
+    WHERE r.id_jogo = @gameId;
 END
