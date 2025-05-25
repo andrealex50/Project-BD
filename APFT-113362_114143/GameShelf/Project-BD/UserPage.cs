@@ -67,12 +67,9 @@ namespace Project_BD
                 panel4.Controls.Clear();
                 panel2.Controls.Clear();
 
-                // Load basic user info
-                string query = "SELECT u.nome, p.bio, p.foto FROM projeto.utilizador u " +
-                               "LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador " +
-                               "WHERE u.id_utilizador = @userId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                // Load user info using stored procedure
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserProfile", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", profileUserId);
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -95,10 +92,9 @@ namespace Project_BD
                             bioBox.ReadOnly = true;
                             bioBox.ScrollBars = ScrollBars.Vertical;
                             bioBox.Font = new Font("Microsoft Sans Serif", 9);
-                            bioBox.Dock = DockStyle.Fill; // Fills the panel2 area
+                            bioBox.Dock = DockStyle.Fill;
                             panel2.Controls.Add(bioBox);
                         }
-
 
                         // Load profile picture if exists
                         if (reader["foto"] != DBNull.Value)
@@ -110,12 +106,12 @@ namespace Project_BD
                             }
                             else
                             {
-                                pictureBox4.Image = null; // Clear image if file doesn't exist
+                                pictureBox4.Image = null;
                             }
                         }
                         else
                         {
-                            pictureBox4.Image = null; // Clear image if no path in database
+                            pictureBox4.Image = null;
                         }
                     }
                 }
@@ -123,40 +119,27 @@ namespace Project_BD
                 // Check follow status if viewing another user's profile
                 if (currentUserId != profileUserId)
                 {
-                    // Need a new connection for the second query
-                    using (SqlConnection followCn = getSGBDConnection())
+                    // Use the existing fn_IsFriend UDF
+                    SqlCommand followCmd = new SqlCommand(
+                        "SELECT projeto.fn_IsFriend(@currentUserId, @profileUserId)", cn);
+                    followCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    followCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                    bool isFollowing = Convert.ToBoolean(followCmd.ExecuteScalar());
+
+                    if (isFollowing)
                     {
-                        if (followCn.State != ConnectionState.Open)
-                            followCn.Open();
-
-                        // Check if already following this user
-                        string checkFollowQuery = @"SELECT 1 FROM projeto.segue 
-                                     WHERE id_utilizador_seguidor = @currentUserId 
-                                     AND id_utilizador_seguido = @profileUserId";
-
-                        using (SqlCommand checkFollowCmd = new SqlCommand(checkFollowQuery, followCn))
+                        if (button3.InvokeRequired)
                         {
-                            checkFollowCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
-                            checkFollowCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
-
-                            object followResult = checkFollowCmd.ExecuteScalar();
-
-                            if (followResult != null)
-                            {
-                                // Use Invoke only if required
-                                if (button3.InvokeRequired)
-                                {
-                                    button3.Invoke((MethodInvoker)delegate {
-                                        button3.Enabled = false;
-                                        button3.Text = "Following";
-                                    });
-                                }
-                                else
-                                {
-                                    button3.Enabled = false;
-                                    button3.Text = "Following";
-                                }
-                            }
+                            button3.Invoke((MethodInvoker)delegate {
+                                button3.Enabled = false;
+                                button3.Text = "Following";
+                            });
+                        }
+                        else
+                        {
+                            button3.Enabled = false;
+                            button3.Text = "Following";
                         }
                     }
                 }
@@ -180,12 +163,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT r.id_review, j.titulo, r.rating, r.descricao_review 
-                              FROM projeto.review r
-                              JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
-                              WHERE r.id_utilizador = @userId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserReviews", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", profileUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -196,13 +175,15 @@ namespace Project_BD
                 listView1.Columns.Add("Game", 150);
                 listView1.Columns.Add("Rating", 60);
                 listView1.Columns.Add("Review", 300);
+                listView1.Columns.Add("Date", 100);
 
                 while (reader.Read())
                 {
-                    ListViewItem item = new ListViewItem(reader["titulo"].ToString());
+                    ListViewItem item = new ListViewItem(reader["game_title"].ToString());
                     item.SubItems.Add(reader["rating"].ToString());
-                    item.SubItems.Add(reader["descricao_review"].ToString());
-                    item.Tag = reader["id_review"].ToString(); // Store review ID in Tag
+                    item.SubItems.Add(reader["review_text"].ToString());
+                    item.SubItems.Add(Convert.ToDateTime(reader["review_date"]).ToString("dd/MM/yyyy"));
+                    item.Tag = reader["id_review"].ToString();
                     listView1.Items.Add(item);
                 }
                 reader.Close();
@@ -225,11 +206,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT id_lista, titulo_lista, descricao_lista 
-                              FROM projeto.lista 
-                              WHERE id_utilizador = @userId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserLists", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", profileUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -238,13 +216,15 @@ namespace Project_BD
                 listView2.View = View.Details;
                 listView2.Columns.Clear();
                 listView2.Columns.Add("Title", 150);
-                listView2.Columns.Add("Description", 300);
+                listView2.Columns.Add("Description", 200);
+                listView2.Columns.Add("Visibility", 80);
 
                 while (reader.Read())
                 {
                     ListViewItem item = new ListViewItem(reader["titulo_lista"].ToString());
-                    item.SubItems.Add(reader["descricao_lista"].ToString());
-                    item.Tag = reader["id_lista"].ToString(); // Store list ID in Tag
+                    item.SubItems.Add(reader["descricao_lista"]?.ToString() ?? "");
+                    item.SubItems.Add(reader["visibilidade_lista"].ToString());
+                    item.Tag = reader["id_lista"].ToString();
                     listView2.Items.Add(item);
                 }
                 reader.Close();
@@ -267,12 +247,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT u.id_utilizador, u.nome 
-                              FROM projeto.utilizador u
-                              JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
-                              WHERE s.id_utilizador_seguidor = @userId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserFollowing", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", profileUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -317,15 +293,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT r.reacao_texto, u.nome, j.titulo, rev.id_review
-                            FROM projeto.reage_a r
-                            JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
-                            JOIN projeto.review rev ON r.id_review = rev.id_review
-                            JOIN projeto.jogo j ON rev.id_jogo = j.id_jogo
-                            WHERE rev.id_utilizador = @userId
-                            ";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserReviewReactions", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", profileUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -336,12 +305,14 @@ namespace Project_BD
                 listView4.Columns.Add("User", 100);
                 listView4.Columns.Add("Game", 150);
                 listView4.Columns.Add("Reaction", 200);
+                listView4.Columns.Add("Date", 100);
 
                 while (reader.Read())
                 {
-                    ListViewItem item = new ListViewItem(reader["nome"].ToString());
-                    item.SubItems.Add(reader["titulo"].ToString());
-                    item.SubItems.Add(reader["reacao_texto"].ToString());
+                    ListViewItem item = new ListViewItem(reader["reactor_name"].ToString());
+                    item.SubItems.Add(reader["game_title"].ToString());
+                    item.SubItems.Add(reader["reaction_text"].ToString());
+                    item.SubItems.Add(Convert.ToDateTime(reader["reaction_date"]).ToString("dd/MM/yyyy"));
                     item.Tag = reader["id_review"].ToString();
                     listView4.Items.Add(item);
                 }
@@ -365,67 +336,53 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                // Best reviewed game
-                string bestReviewedQuery = @"SELECT TOP 1 j.titulo 
-                                           FROM projeto.review r
-                                           JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
-                                           WHERE r.id_utilizador = @userId
-                                           ORDER BY r.rating DESC";
-                SqlCommand bestReviewedCmd = new SqlCommand(bestReviewedQuery, cn);
-                bestReviewedCmd.Parameters.AddWithValue("@userId", profileUserId);
-                string bestReviewed = bestReviewedCmd.ExecuteScalar()?.ToString() ?? "None";
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserGameStats", cn);
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@userId", profileUserId);
 
-                Label bestReviewedLabel = new Label();
-                bestReviewedLabel.Text = bestReviewed;
-                bestReviewedLabel.AutoSize = true;
-                panel6.Controls.Add(bestReviewedLabel);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    // Best reviewed game
+                    if (reader.Read())
+                    {
+                        Label bestReviewedLabel = new Label();
+                        bestReviewedLabel.Text = reader["best_reviewed_game"]?.ToString() ?? "None";
+                        bestReviewedLabel.AutoSize = true;
+                        panel6.Controls.Clear();
+                        panel6.Controls.Add(bestReviewedLabel);
+                    }
 
-                // Most played game
-                string mostPlayedQuery = @"SELECT TOP 1 j.titulo 
-                                        FROM projeto.review r
-                                        JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
-                                        WHERE r.id_utilizador = @userId
-                                        ORDER BY r.horas_jogadas DESC";
-                SqlCommand mostPlayedCmd = new SqlCommand(mostPlayedQuery, cn);
-                mostPlayedCmd.Parameters.AddWithValue("@userId", profileUserId);
-                string mostPlayed = mostPlayedCmd.ExecuteScalar()?.ToString() ?? "None";
+                    // Most played game
+                    if (reader.NextResult() && reader.Read())
+                    {
+                        Label mostPlayedLabel = new Label();
+                        mostPlayedLabel.Text = reader["most_played_game"]?.ToString() ?? "None";
+                        mostPlayedLabel.AutoSize = true;
+                        panel7.Controls.Clear();
+                        panel7.Controls.Add(mostPlayedLabel);
+                    }
 
-                Label mostPlayedLabel = new Label();
-                mostPlayedLabel.Text = mostPlayed;
-                mostPlayedLabel.AutoSize = true;
-                panel7.Controls.Add(mostPlayedLabel);
+                    // Most reviewed genre
+                    if (reader.NextResult() && reader.Read())
+                    {
+                        Label mostReviewedGenreLabel = new Label();
+                        mostReviewedGenreLabel.Text = reader["most_reviewed_genre"]?.ToString() ?? "None";
+                        mostReviewedGenreLabel.AutoSize = true;
+                        panel8.Controls.Clear();
+                        panel8.Controls.Add(mostReviewedGenreLabel);
+                    }
 
-                // Most reviewed genre
-                string mostReviewedGenreQuery = @"SELECT TOP 1 g.nome
-                                               FROM projeto.review r
-                                               JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
-                                               JOIN projeto.genero g ON j.id_jogo = g.id_jogo
-                                               WHERE r.id_utilizador = @userId
-                                               GROUP BY g.nome
-                                               ORDER BY COUNT(*) DESC";
-                SqlCommand mostReviewedGenreCmd = new SqlCommand(mostReviewedGenreQuery, cn);
-                mostReviewedGenreCmd.Parameters.AddWithValue("@userId", profileUserId);
-                string mostReviewedGenre = mostReviewedGenreCmd.ExecuteScalar()?.ToString() ?? "None";
-
-                Label mostReviewedGenreLabel = new Label();
-                mostReviewedGenreLabel.Text = mostReviewedGenre;
-                mostReviewedGenreLabel.AutoSize = true;
-                panel8.Controls.Add(mostReviewedGenreLabel);
-
-                // Average review score
-                string avgScoreQuery = @"SELECT AVG(CAST(r.rating AS FLOAT))
-                                      FROM projeto.review r
-                                      WHERE r.id_utilizador = @userId";
-                SqlCommand avgScoreCmd = new SqlCommand(avgScoreQuery, cn);
-                avgScoreCmd.Parameters.AddWithValue("@userId", profileUserId);
-                object avgScoreObj = avgScoreCmd.ExecuteScalar();
-                string avgScore = avgScoreObj != DBNull.Value ?
-                    Math.Round(Convert.ToDouble(avgScoreObj), 2).ToString() : "None";
-
-                Label avgScoreLabel = new Label();
-                avgScoreLabel.Text = avgScore;
-                avgScoreLabel.AutoSize = true;
-                panel9.Controls.Add(avgScoreLabel);
+                    // Average review score
+                    if (reader.NextResult() && reader.Read())
+                    {
+                        Label avgScoreLabel = new Label();
+                        avgScoreLabel.Text = reader["avg_rating"] != DBNull.Value ?
+                            Math.Round(Convert.ToDouble(reader["avg_rating"]), 2).ToString() : "None";
+                        avgScoreLabel.AutoSize = true;
+                        panel9.Controls.Clear();
+                        panel9.Controls.Add(avgScoreLabel);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -510,19 +467,18 @@ namespace Project_BD
                     using (SqlConnection tempCn = getSGBDConnection())
                     {
                         tempCn.Open();
-                        string query = @"SELECT titulo_lista, u.nome 
-                                 FROM projeto.lista l
-                                 JOIN projeto.utilizador u ON l.id_utilizador = u.id_utilizador
-                                 WHERE id_lista = @listId";
 
-                        SqlCommand cmd = new SqlCommand(query, tempCn);
+                        // Use the existing stored procedure
+                        SqlCommand cmd = new SqlCommand("projeto.sp_GetListOwner", tempCn);
+                        cmd.CommandType = CommandType.StoredProcedure;
                         cmd.Parameters.AddWithValue("@listId", listId);
+
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                string listTitle = reader["titulo_lista"].ToString();
                                 string creatorName = reader["nome"].ToString();
+                                string listTitle = listView2.SelectedItems[0].Text; // We already have the title in the ListView
 
                                 this.Close();
                                 Lista listPage = new Lista(currentUserId, listId, listTitle, creatorName);
@@ -546,7 +502,7 @@ namespace Project_BD
             if (listView3.SelectedItems.Count > 0)
             {
                 string friendId = listView3.SelectedItems[0].Text;
-                this.Hide(); // Better to hide than close
+                this.Hide();
                 UserPage friendPage = new UserPage(currentUserId, friendId);
                 friendPage.Closed += (s, args) => this.Close(); // Close this form when friend page closes
                 friendPage.Show();
@@ -627,10 +583,22 @@ namespace Project_BD
 
                 if (button3.Text == "Follow")
                 {
-                    // Insert follow relationship
+                    // Use the existing fn_IsFriend UDF to check first
+                    SqlCommand checkCmd = new SqlCommand(
+                        "SELECT projeto.fn_IsFriend(@currentUserId, @profileUserId)", cn);
+                    checkCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    checkCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+                    bool alreadyFollowing = Convert.ToBoolean(checkCmd.ExecuteScalar());
+
+                    if (alreadyFollowing)
+                    {
+                        MessageBox.Show("You are already following this user!");
+                        return;
+                    }
+
                     string insertQuery = @"INSERT INTO projeto.segue 
-                    (id_utilizador_seguidor, id_utilizador_seguido, data_seguir) 
-                    VALUES (@currentUserId, @profileUserId, GETDATE())";
+                (id_utilizador_seguidor, id_utilizador_seguido, data_seguir) 
+                VALUES (@currentUserId, @profileUserId, GETDATE())";
 
                     SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
                     insertCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
@@ -642,20 +610,15 @@ namespace Project_BD
                     {
                         MessageBox.Show("You are now following this user!");
                         button3.Text = "Unfollow";
-
-                        LoadUserFriends(); // Atualiza lista de amigos
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to follow user.");
+                        LoadUserFriends();
                     }
                 }
                 else if (button3.Text == "Unfollow")
                 {
                     // Remove follow relationship
                     string deleteQuery = @"DELETE FROM projeto.segue 
-                                   WHERE id_utilizador_seguidor = @currentUserId 
-                                   AND id_utilizador_seguido = @profileUserId";
+                WHERE id_utilizador_seguidor = @currentUserId 
+                AND id_utilizador_seguido = @profileUserId";
 
                     SqlCommand deleteCmd = new SqlCommand(deleteQuery, cn);
                     deleteCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
@@ -667,12 +630,7 @@ namespace Project_BD
                     {
                         MessageBox.Show("You have unfollowed this user.");
                         button3.Text = "Follow";
-
-                        LoadUserFriends(); // Atualiza lista de amigos
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to unfollow user.");
+                        LoadUserFriends();
                     }
                 }
             }

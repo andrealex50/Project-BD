@@ -528,3 +528,132 @@ BEGIN
     ORDER BY r.reacao_data DESC;
 END
 GO
+
+--UserPage
+--SP para recolher info do user
+CREATE PROCEDURE projeto.sp_GetUserProfile
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        u.id_utilizador,
+        u.nome,
+        p.bio,
+        p.foto,
+        (SELECT COUNT(*) FROM projeto.segue WHERE id_utilizador_seguidor = @userId) AS following_count,
+        (SELECT COUNT(*) FROM projeto.segue WHERE id_utilizador_seguido = @userId) AS followers_count,
+        (SELECT COUNT(*) FROM projeto.review WHERE id_utilizador = @userId) AS reviews_count,
+        (SELECT COUNT(*) FROM projeto.lista WHERE id_utilizador = @userId) AS lists_count
+    FROM projeto.utilizador u
+    LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
+    WHERE u.id_utilizador = @userId;
+END
+GO
+
+--SP para recolher user reviews
+CREATE PROCEDURE projeto.sp_GetUserReviews
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        r.id_review, 
+        j.titulo AS game_title, 
+        r.rating, 
+        r.descricao_review AS review_text,
+        r.data_review AS review_date,
+        r.horas_jogadas AS hours_played
+    FROM projeto.review r
+    JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
+    WHERE r.id_utilizador = @userId
+    ORDER BY r.data_review DESC;
+END
+GO
+
+-- SP para recolher listas com info basica
+CREATE PROCEDURE projeto.sp_GetUserLists
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        id_lista, 
+        titulo_lista, 
+        descricao_lista,
+        visibilidade_lista,
+        usa_posicoes
+    FROM projeto.lista
+    WHERE id_utilizador = @userId
+    ORDER BY titulo_lista;
+END
+GO
+
+-- Recolher amigos do user
+CREATE PROCEDURE projeto.sp_GetUserFollowing
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        u.id_utilizador,
+        u.nome,
+        p.foto
+    FROM projeto.segue s
+    JOIN projeto.utilizador u ON s.id_utilizador_seguido = u.id_utilizador
+    LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
+    WHERE s.id_utilizador_seguidor = @userId
+    ORDER BY u.nome;
+END
+GO
+
+-- Recolher reacoes a reviews do user
+CREATE PROCEDURE projeto.sp_GetUserReviewReactions
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        r.id_review,
+        j.titulo AS game_title,
+        u.nome AS reactor_name,
+        ra.reacao_texto AS reaction_text,
+        ra.reacao_data AS reaction_date
+    FROM projeto.review r
+    JOIN projeto.reage_a ra ON r.id_review = ra.id_review
+    JOIN projeto.utilizador u ON ra.id_utilizador = u.id_utilizador
+    JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
+    WHERE r.id_utilizador = @userId
+    ORDER BY ra.reacao_data DESC;
+END
+GO
+
+-- Get user statistics
+CREATE PROCEDURE projeto.sp_GetUserGameStats
+    @userId VARCHAR(20)
+AS
+BEGIN
+    -- Best reviewed game
+    SELECT TOP 1 j.titulo AS best_reviewed_game
+    FROM projeto.review r
+    JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
+    WHERE r.id_utilizador = @userId
+    ORDER BY r.rating DESC;
+    
+    -- Most played game
+    SELECT TOP 1 j.titulo AS most_played_game
+    FROM projeto.review r
+    JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
+    WHERE r.id_utilizador = @userId
+    ORDER BY r.horas_jogadas DESC;
+    
+    -- Most reviewed genre
+    SELECT TOP 1 g.nome AS most_reviewed_genre
+    FROM projeto.review r
+    JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
+    JOIN projeto.genero g ON j.id_jogo = g.id_jogo
+    WHERE r.id_utilizador = @userId
+    GROUP BY g.nome
+    ORDER BY COUNT(*) DESC;
+    
+    -- Average review score
+    SELECT AVG(CAST(rating AS FLOAT)) AS avg_rating
+    FROM projeto.review
+    WHERE id_utilizador = @userId;
+END
+GO
