@@ -191,7 +191,7 @@ namespace Project_BD
                     SqlCommand updateRating = new SqlCommand(@"
                 UPDATE projeto.jogo
                 SET rating_medio = (
-                    SELECT AVG(CAST(rating AS FLOAT))
+                    SELECT ISNULL(AVG(CAST(rating AS FLOAT)), 0)
                     FROM projeto.review
                     WHERE id_jogo = @gameId
                 )

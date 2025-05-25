@@ -316,12 +316,13 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT r.reacao_texto, u.nome, j.titulo 
-                              FROM projeto.reage_a r
-                              JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
-                              JOIN projeto.review rev ON r.id_review = rev.id_review
-                              JOIN projeto.jogo j ON rev.id_jogo = j.id_jogo
-                              WHERE rev.id_utilizador = @userId";
+                string query = @"SELECT r.reacao_texto, u.nome, j.titulo, rev.id_review
+                            FROM projeto.reage_a r
+                            JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+                            JOIN projeto.review rev ON r.id_review = rev.id_review
+                            JOIN projeto.jogo j ON rev.id_jogo = j.id_jogo
+                            WHERE rev.id_utilizador = @userId
+                            ";
 
                 SqlCommand command = new SqlCommand(query, cn);
                 command.Parameters.AddWithValue("@userId", profileUserId);
@@ -340,6 +341,7 @@ namespace Project_BD
                     ListViewItem item = new ListViewItem(reader["nome"].ToString());
                     item.SubItems.Add(reader["titulo"].ToString());
                     item.SubItems.Add(reader["reacao_texto"].ToString());
+                    item.Tag = reader["id_review"].ToString();
                     listView4.Items.Add(item);
                 }
                 reader.Close();
@@ -488,10 +490,15 @@ namespace Project_BD
             if (listView1.SelectedItems.Count > 0)
             {
                 string reviewId = listView1.SelectedItems[0].Tag.ToString();
+
                 ReviewDetails reviewDetails = new ReviewDetails(currentUserId, reviewId);
-                reviewDetails.ShowDialog();
+                reviewDetails.ShowDialog(); // Waits for the review form to close
+
+                // After closing ReviewDetails, refresh the list
+                LoadUserReviews();
             }
         }
+
 
         // Show personal Lists
         private void listView2_DoubleClick(object sender, EventArgs e)
@@ -521,7 +528,9 @@ namespace Project_BD
 
                                 this.Close();
                                 Lista listPage = new Lista(currentUserId, listId, listTitle, creatorName);
-                                listPage.Show();
+                                listPage.ShowDialog();
+
+                                LoadUserLists();
                             }
                         }
                     }
@@ -547,48 +556,29 @@ namespace Project_BD
         }
 
 
-
         // Show reactions to other reviews
         private void listView4_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Optional: Add functionality to view the review that was reacted to
+            if (listView4.SelectedItems.Count == 0)
+                return;
+
+            var selectedItem = listView4.SelectedItems[0];
+            string reactedReviewId = selectedItem.Tag?.ToString();
+
+            if (string.IsNullOrEmpty(reactedReviewId))
+            {
+                MessageBox.Show("No review ID found for this reaction.");
+                return;
+            }
+
+            ReviewDetails reviewDetailsForm = new ReviewDetails(currentUserId, reactedReviewId);
+            reviewDetailsForm.ShowDialog();
+
+            LoadReviewReactions();
+            LoadUserReviews();
         }
 
-        // Show name
-        private void panel4_Paint(object sender, PaintEventArgs e)
-        {
-            // Handled in LoadUserData()
-        }
 
-        // Show bio
-        private void panel2_Paint(object sender, PaintEventArgs e)
-        {
-            // Handled in LoadUserData()
-        }
-
-        // Calculate and show best reviewed game
-        private void panel6_Paint(object sender, PaintEventArgs e)
-        {
-            // Handled in LoadUserStatistics()
-        }
-
-        // Calculate and show most played game through number of hours played stated in the reaction to said game
-        private void panel7_Paint(object sender, PaintEventArgs e)
-        {
-            // Handled in LoadUserStatistics()
-        }
-
-        // Calculate and show most reviewed genre
-        private void panel8_Paint(object sender, PaintEventArgs e)
-        {
-            // Handled in LoadUserStatistics()
-        }
-
-        // Calculate and show average review score (rating that is given in a review)
-        private void panel9_Paint(object sender, PaintEventArgs e)
-        {
-            // Handled in LoadUserStatistics()
-        }
 
         // Button to create a list. Go to Lista.cs. Only the user that owns the user account being visited can see this button and therefore create a new list from this page.
         private void button1_Click(object sender, EventArgs e)
@@ -628,12 +618,6 @@ namespace Project_BD
             }
         }
 
-        // This is to calculate the number of friends the user has, and display them
-        private void panel5_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
         // Botão para adicionar amigo (só deve aparecer se o perfil não for nosso)
         private void button3_Click(object sender, EventArgs e)
         {
@@ -643,56 +627,110 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                // Check if already following this user
-                string checkQuery = @"SELECT 1 FROM projeto.segue 
-                          WHERE id_utilizador_seguidor = @currentUserId 
-                          AND id_utilizador_seguido = @profileUserId";
-
-                SqlCommand checkCmd = new SqlCommand(checkQuery, cn);
-                checkCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
-                checkCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
-
-                object result = checkCmd.ExecuteScalar();
-
-                if (result != null)
+                if (button3.Text == "Follow")
                 {
-                    MessageBox.Show("You are already following this user!");
-                    return;
+                    // Insert follow relationship
+                    string insertQuery = @"INSERT INTO projeto.segue 
+                    (id_utilizador_seguidor, id_utilizador_seguido, data_seguir) 
+                    VALUES (@currentUserId, @profileUserId, GETDATE())";
+
+                    SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
+                    insertCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    insertCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                    int rowsAffected = insertCmd.ExecuteNonQuery();
+
+                    if (rowsAffected > 0)
+                    {
+                        MessageBox.Show("You are now following this user!");
+                        button3.Text = "Unfollow";
+
+                        LoadUserFriends(); // Atualiza lista de amigos
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to follow user.");
+                    }
                 }
-
-                // Insert follow relationship
-                string insertQuery = @"INSERT INTO projeto.segue 
-                            (id_utilizador_seguidor, id_utilizador_seguido, data_seguir) 
-                            VALUES (@currentUserId, @profileUserId, GETDATE())";
-
-                SqlCommand insertCmd = new SqlCommand(insertQuery, cn);
-                insertCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
-                insertCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
-
-                int rowsAffected = insertCmd.ExecuteNonQuery();
-
-                if (rowsAffected > 0)
+                else if (button3.Text == "Unfollow")
                 {
-                    MessageBox.Show("You are now following this user!");
-                    button3.Enabled = false;
-                    button3.Text = "Following";
+                    // Remove follow relationship
+                    string deleteQuery = @"DELETE FROM projeto.segue 
+                                   WHERE id_utilizador_seguidor = @currentUserId 
+                                   AND id_utilizador_seguido = @profileUserId";
 
-                    // Refresh friends list to show the new relationship
-                    LoadUserFriends();
-                }
-                else
-                {
-                    MessageBox.Show("Failed to follow user.");
+                    SqlCommand deleteCmd = new SqlCommand(deleteQuery, cn);
+                    deleteCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    deleteCmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                    int rowsAffected = deleteCmd.ExecuteNonQuery();
+
+                    if (rowsAffected > 0)
+                    {
+                        MessageBox.Show("You have unfollowed this user.");
+                        button3.Text = "Follow";
+
+                        LoadUserFriends(); // Atualiza lista de amigos
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to unfollow user.");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error following user: " + ex.Message);
+                MessageBox.Show("Error processing follow/unfollow: " + ex.Message);
             }
             finally
             {
                 cn.Close();
             }
         }
+
+        private void UserPage_Load(object sender, EventArgs e)
+        {
+            CheckFollowStatus();
+        }
+
+        private void CheckFollowStatus()
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                string query = @"SELECT projeto.fn_IsFriend(@currentUserId, @profileUserId)";
+
+                SqlCommand cmd = new SqlCommand(query, cn);
+                cmd.Parameters.AddWithValue("@currentUserId", currentUserId);
+                cmd.Parameters.AddWithValue("@profileUserId", profileUserId);
+
+                object result = cmd.ExecuteScalar();
+
+                if (result != null && Convert.ToBoolean(result))
+                {
+                    // Já é amigo (segue)
+                    button3.Text = "Unfollow";
+                    button3.Enabled = true;
+                }
+                else
+                {
+                    // Não é amigo
+                    button3.Text = "Follow";
+                    button3.Enabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao verificar status de amizade: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
     }
 }
