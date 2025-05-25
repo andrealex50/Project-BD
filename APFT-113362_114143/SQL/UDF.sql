@@ -5,6 +5,9 @@ DROP FUNCTION IF EXISTS projeto.fn_IsListOwner;
 DROP FUNCTION IF EXISTS projeto.fn_GenerateEntryId;
 DROP FUNCTION IF EXISTS projeto.fn_GenerateListId;
 DROP FUNCTION IF EXISTS projeto.fn_CanUserReviewGame;
+DROP FUNCTION IF EXISTS projeto.fn_GenerateUserId;
+DROP FUNCTION IF EXISTS projeto.fn_IsReviewOwner;
+DROP FUNCTION IF EXISTS projeto.fn_GenerateReviewId;
 GO
 
 -- UDF para Calcular Rating Médio de um Jogo

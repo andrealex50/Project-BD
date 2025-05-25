@@ -13,6 +13,19 @@ DROP PROCEDURE IF EXISTS projeto.sp_GetGameDetails;
 DROP PROCEDURE IF EXISTS projeto.sp_CheckUserGameReview;
 DROP PROCEDURE IF EXISTS projeto.sp_GetGameWithRelatedData;
 DROP PROCEDURE IF EXISTS projeto.sp_GetFilteredGameReviews;
+DROP PROCEDURE IF EXISTS projeto.sp_CheckUserExists;
+DROP PROCEDURE IF EXISTS projeto.sp_RegisterUser;
+DROP PROCEDURE IF EXISTS projeto.sp_GetReviewDetails;
+DROP PROCEDURE IF EXISTS projeto.sp_DeleteReview;
+DROP PROCEDURE IF EXISTS projeto.sp_GetReviewReactions;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserProfile;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserReviews;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserLists;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserFollowing;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserReviewReactions;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserGameStats;
+DROP PROCEDURE IF EXISTS projeto.sp_CreateReview;
+DROP PROCEDURE IF EXISTS projeto.sp_UpdateReview;
 GO
 
 
@@ -572,7 +585,7 @@ GO
 -- SP para recolher listas com info basica
 CREATE PROCEDURE projeto.sp_GetUserLists
     @userId VARCHAR(20),
-    @currentUserId VARCHAR(20) = NULL -- Add this parameter
+    @currentUserId VARCHAR(20) = NULL
 AS
 BEGIN
     -- If current user is viewing their own profile, show all lists
@@ -602,6 +615,7 @@ BEGIN
         ORDER BY titulo_lista;
     END
 END
+GO
 
 -- Recolher amigos do user
 CREATE PROCEDURE projeto.sp_GetUserFollowing
