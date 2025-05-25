@@ -162,6 +162,16 @@ namespace Project_BD
 
                 // Load reviews
                 LoadReviews("All");
+
+                if (CanUserReview())
+                {
+                    button1.Text = "Add Review";
+                }
+                else
+                {
+                    button1.Text = "Update Review";
+                }
+
             }
             catch (Exception ex)
             {
@@ -333,12 +343,6 @@ namespace Project_BD
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (!CanUserReview())
-            {
-                MessageBox.Show("You have already reviewed this game!");
-                return;
-            }
-
             this.Hide();
             ReviewPage reviewPageForm = new ReviewPage(currentUserId, gameId);
             reviewPageForm.Show();

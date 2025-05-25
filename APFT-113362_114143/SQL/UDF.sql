@@ -170,3 +170,25 @@ BEGIN
     RETURN @canReview;
 END
 GO
+
+--RegisterForm
+--UDF para criar um id exclusivo para um user
+CREATE FUNCTION projeto.fn_GenerateUserId()
+RETURNS VARCHAR(20)
+AS
+BEGIN
+    DECLARE @count INT;
+    DECLARE @newId VARCHAR(20);
+    
+    SELECT @count = COUNT(*) + 1 FROM projeto.utilizador;
+    SET @newId = 'U' + RIGHT('000' + CAST(@count AS VARCHAR(3)), 3);
+    
+    WHILE EXISTS (SELECT 1 FROM projeto.utilizador WHERE id_utilizador = @newId)
+    BEGIN
+        SET @count = @count + 1;
+        SET @newId = 'U' + RIGHT('000' + CAST(@count AS VARCHAR(3)), 3);
+    END
+    
+    RETURN @newId;
+END
+GO

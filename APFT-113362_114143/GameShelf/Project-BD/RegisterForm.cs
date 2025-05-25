@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace Project_BD
 {
@@ -51,7 +50,8 @@ namespace Project_BD
                 return;
             }
 
-            if (name == "adminmod") {
+            if (name == "adminmod")
+            {
                 MessageBox.Show("That username is not available");
                 return;
             }
@@ -67,12 +67,29 @@ namespace Project_BD
 
             try
             {
-                SqlCommand cmd = new SqlCommand(
-                    "INSERT INTO projeto.utilizador (id_utilizador, nome, email, password) " +
-                    "VALUES (@Id, @Nome, @Email, @Password)", cn);
+                // Check if username or email already exists using a stored procedure
+                SqlCommand checkCmd = new SqlCommand("projeto.sp_CheckUserExists", cn);
+                checkCmd.CommandType = CommandType.StoredProcedure;
+                checkCmd.Parameters.AddWithValue("@Name", name);
+                checkCmd.Parameters.AddWithValue("@Email", email);
 
+                SqlParameter existsParam = new SqlParameter("@Exists", SqlDbType.Bit);
+                existsParam.Direction = ParameterDirection.Output;
+                checkCmd.Parameters.Add(existsParam);
+
+                checkCmd.ExecuteNonQuery();
+
+                if ((bool)existsParam.Value)
+                {
+                    MessageBox.Show("Username or email already in use.");
+                    return;
+                }
+
+                // Use stored procedure for registration
+                SqlCommand cmd = new SqlCommand("projeto.sp_RegisterUser", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Id", id_utilizador);
-                cmd.Parameters.AddWithValue("@Nome", name);
+                cmd.Parameters.AddWithValue("@Name", name);
                 cmd.Parameters.AddWithValue("@Email", email);
                 cmd.Parameters.AddWithValue("@Password", hashedPassword);
 
@@ -91,14 +108,7 @@ namespace Project_BD
             }
             catch (SqlException ex)
             {
-                if (ex.Number == 2627) // Unique constraint violation
-                {
-                    MessageBox.Show("Name already in use.");
-                }
-                else
-                {
-                    MessageBox.Show("SQL Error: " + ex.Message);
-                }
+                MessageBox.Show("Error: " + ex.Message);
             }
             finally
             {
@@ -122,9 +132,9 @@ namespace Project_BD
 
         private string GenerateUniqueID()
         {
-            SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM projeto.utilizador", cn);
-            int count = (int)cmd.ExecuteScalar();
-            return "U" + (count + 1).ToString("D3");
+            
+            SqlCommand cmd = new SqlCommand("SELECT projeto.fn_GenerateUserId()", cn);
+            return cmd.ExecuteScalar().ToString();
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -132,7 +142,7 @@ namespace Project_BD
             this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
-        //Hello
+
         private void RegisterForm_Load(object sender, EventArgs e)
         {
 

@@ -427,3 +427,34 @@ BEGIN
     END
 END
 GO
+
+--RegisterForm
+--SP para verficar se um user ja existe
+CREATE PROCEDURE projeto.sp_CheckUserExists
+    @Name VARCHAR(50),
+    @Email VARCHAR(100),
+    @Exists BIT OUTPUT
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM projeto.utilizador 
+        WHERE nome = @Name OR email = @Email
+    )
+        SET @Exists = 1;
+    ELSE
+        SET @Exists = 0;
+END
+GO
+
+--SP para registas um novo user
+CREATE PROCEDURE projeto.sp_RegisterUser
+    @Id VARCHAR(20),
+    @Name VARCHAR(50),
+    @Email VARCHAR(100),
+    @Password VARCHAR(255)
+AS
+BEGIN
+    INSERT INTO projeto.utilizador (id_utilizador, nome, email, password)
+    VALUES (@Id, @Name, @Email, @Password);
+END
+GO
