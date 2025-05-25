@@ -36,6 +36,7 @@ namespace Project_BD
 
             // Only show add friend button if viewing someone else's profile
             button3.Visible = (currentUserId != profileUserId);
+            listView1.MouseDoubleClick += listView1_MouseDoubleClick;
         }
 
         private SqlConnection getSGBDConnection()
@@ -485,16 +486,13 @@ namespace Project_BD
         }
 
         // Show Personal reviews
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (listView1.SelectedItems.Count > 0)
+            if (listView1.SelectedItems.Count == 1)
             {
                 string reviewId = listView1.SelectedItems[0].Tag.ToString();
-
                 ReviewDetails reviewDetails = new ReviewDetails(currentUserId, reviewId);
-                reviewDetails.ShowDialog(); // Waits for the review form to close
-
-                // After closing ReviewDetails, refresh the list
+                reviewDetails.ShowDialog();
                 LoadUserReviews();
             }
         }
