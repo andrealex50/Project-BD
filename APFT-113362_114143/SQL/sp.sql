@@ -458,3 +458,73 @@ BEGIN
     VALUES (@Id, @Name, @Email, @Password);
 END
 GO
+
+--ReviewDetails
+--SP para recolher review details
+CREATE PROCEDURE projeto.sp_GetReviewDetails
+    @reviewId VARCHAR(20)
+AS
+BEGIN
+    SELECT j.titulo AS GameTitle, u.nome AS UserName, 
+           r.rating, r.horas_jogadas AS HoursPlayed, 
+           r.descricao_review AS ReviewText, r.data_review AS ReviewDate
+    FROM projeto.review r
+    JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
+    JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+    WHERE r.id_review = @reviewId;
+END
+GO
+
+--SP para elimiar uma review
+CREATE PROCEDURE projeto.sp_DeleteReview
+    @reviewId VARCHAR(20),
+    @userId VARCHAR(20)
+AS
+BEGIN
+    DECLARE @gameId VARCHAR(20);
+    
+    BEGIN TRANSACTION;
+    
+    BEGIN TRY
+        -- Get game ID first
+        SELECT @gameId = id_jogo 
+        FROM projeto.review 
+        WHERE id_review = @reviewId AND id_utilizador = @userId;
+        
+        IF @gameId IS NULL
+        BEGIN
+            RAISERROR('Review not found or not owned by user', 16, 1);
+            ROLLBACK;
+            RETURN;
+        END
+        
+        -- Delete reactions first (triggers will handle the rest)
+        DELETE FROM projeto.reage_a WHERE id_review = @reviewId;
+        
+        -- Delete the review (this will trigger tr_UpdateGameRating)
+        DELETE FROM projeto.review WHERE id_review = @reviewId;
+        
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END
+GO
+
+--SP para recolher reacoes a reviews
+CREATE PROCEDURE projeto.sp_GetReviewReactions
+    @reviewId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        u.nome AS UserName, 
+        r.reacao_texto AS ReactionText,
+        r.reacao_data AS ReactionDate
+    FROM projeto.reage_a r
+    JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
+    WHERE r.id_review = @reviewId
+    ORDER BY r.reacao_data DESC;
+END
+GO

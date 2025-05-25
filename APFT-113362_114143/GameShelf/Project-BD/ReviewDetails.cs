@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Data.SqlTypes;
 
 namespace Project_BD
 {
@@ -45,15 +46,9 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT j.titulo AS GameTitle, u.nome AS UserName, 
-                               r.rating, r.horas_jogadas AS HoursPlayed, 
-                               r.descricao_review AS ReviewText, r.data_review AS ReviewDate
-                               FROM projeto.review r
-                               JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
-                               JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
-                               WHERE r.id_review = @reviewId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                // Use stored procedure to get review data
+                SqlCommand command = new SqlCommand("projeto.sp_GetReviewDetails", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@reviewId", reviewId);
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -69,7 +64,7 @@ namespace Project_BD
                     }
                 }
 
-                // Load reactions to this review
+                // Load reactions using existing sp
                 LoadReviewReactions();
             }
             catch (Exception ex)
@@ -87,40 +82,50 @@ namespace Project_BD
         {
             try
             {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
-
-                string query = @"SELECT u.nome AS UserName, r.reacao_texto AS ReactionText
-                               FROM projeto.reage_a r
-                               JOIN projeto.utilizador u ON r.id_utilizador = u.id_utilizador
-                               WHERE r.id_review = @reviewId";
-
-                SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@reviewId", reviewId);
-
-                listReactions.Items.Clear();
-                listReactions.View = View.Details;
-                listReactions.Columns.Clear();
-                listReactions.Columns.Add("User", 150);
-                listReactions.Columns.Add("Reaction", 300);
-
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                using (cn = getSGBDConnection())
                 {
-                    ListViewItem item = new ListViewItem(reader["UserName"].ToString());
-                    item.SubItems.Add(reader["ReactionText"].ToString());
-                    listReactions.Items.Add(item);
+                    if (!verifySGBDConnection()) return;
+
+                    // Use stored procedure 
+                    using (SqlCommand command = new SqlCommand("projeto.sp_GetReviewReactions", cn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@reviewId", reviewId);
+
+                        listReactions.BeginUpdate();
+                        try
+                        {
+                            listReactions.Items.Clear();
+                            listReactions.Columns.Clear();
+
+                            // Set up columns
+                            listReactions.View = View.Details;
+                            listReactions.Columns.Add("User", 150);
+                            listReactions.Columns.Add("Reaction", 250);
+                            listReactions.Columns.Add("Date", 100);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    ListViewItem item = new ListViewItem(reader["UserName"].ToString());
+                                    item.SubItems.Add(reader["ReactionText"].ToString());
+                                    item.SubItems.Add(Convert.ToDateTime(reader["ReactionDate"]).ToString("dd/MM/yyyy"));
+                                    listReactions.Items.Add(item);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            listReactions.EndUpdate();
+                        }
+                    }
                 }
-                reader.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading reactions: " + ex.Message);
-            }
-            finally
-            {
-                cn.Close();
+                MessageBox.Show($"Error loading reactions: {ex.Message}", "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -150,64 +155,32 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                // First, check if the current user is the author of the review
-                string checkAuthorQuery = @"SELECT id_utilizador, id_jogo FROM projeto.review WHERE id_review = @reviewId";
-                SqlCommand checkCmd = new SqlCommand(checkAuthorQuery, cn);
+                // Use fn_IsReviewOwner UDF to check ownership
+                SqlCommand checkCmd = new SqlCommand(
+                    "SELECT projeto.fn_IsReviewOwner(@currentUserId, @reviewId) AS isOwner", cn);
+                checkCmd.Parameters.AddWithValue("@currentUserId", currentUserId);
                 checkCmd.Parameters.AddWithValue("@reviewId", reviewId);
-                SqlDataReader reader = checkCmd.ExecuteReader();
 
-                string authorId = null;
-                string gameId = null;
+                bool isOwner = Convert.ToBoolean(checkCmd.ExecuteScalar());
 
-                if (reader.Read())
-                {
-                    authorId = reader["id_utilizador"].ToString();
-                    gameId = reader["id_jogo"].ToString();
-                }
-                reader.Close();
-
-                if (authorId == null || authorId != currentUserId)
+                if (!isOwner)
                 {
                     MessageBox.Show("You can only delete your own reviews.");
                     return;
                 }
 
-                // Begin delete transaction
-                SqlTransaction transaction = cn.BeginTransaction();
+                // Use sp_DeleteReview stored procedure
+                SqlCommand deleteCmd = new SqlCommand("projeto.sp_DeleteReview", cn);
+                deleteCmd.CommandType = CommandType.StoredProcedure;
+                deleteCmd.Parameters.AddWithValue("@reviewId", reviewId);
+                deleteCmd.Parameters.AddWithValue("@userId", currentUserId);
 
-                try
+                int result = deleteCmd.ExecuteNonQuery();
+
+                if (result > 0)
                 {
-                    // Delete reactions first
-                    SqlCommand deleteReactions = new SqlCommand(@"DELETE FROM projeto.reage_a WHERE id_review = @reviewId", cn, transaction);
-                    deleteReactions.Parameters.AddWithValue("@reviewId", reviewId);
-                    deleteReactions.ExecuteNonQuery();
-
-                    // Delete the review itself
-                    SqlCommand deleteReview = new SqlCommand(@"DELETE FROM projeto.review WHERE id_review = @reviewId", cn, transaction);
-                    deleteReview.Parameters.AddWithValue("@reviewId", reviewId);
-                    deleteReview.ExecuteNonQuery();
-
-                    // Update the game's average rating
-                    SqlCommand updateRating = new SqlCommand(@"
-                UPDATE projeto.jogo
-                SET rating_medio = (
-                    SELECT ISNULL(AVG(CAST(rating AS FLOAT)), 0)
-                    FROM projeto.review
-                    WHERE id_jogo = @gameId
-                )
-                WHERE id_jogo = @gameId", cn, transaction);
-                    updateRating.Parameters.AddWithValue("@gameId", gameId);
-                    updateRating.ExecuteNonQuery();
-
-                    transaction.Commit();
-
-                    MessageBox.Show("Review and its reactions deleted successfully.");
-                    this.Close(); // Close the form
-                }
-                catch (Exception innerEx)
-                {
-                    transaction.Rollback();
-                    MessageBox.Show("Error during deletion: " + innerEx.Message);
+                    MessageBox.Show("Review deleted successfully.");
+                    this.Close();
                 }
             }
             catch (Exception ex)

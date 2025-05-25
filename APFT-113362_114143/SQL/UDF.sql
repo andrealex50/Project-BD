@@ -192,3 +192,29 @@ BEGIN
     RETURN @newId;
 END
 GO
+
+--ReviewDetails
+--UDF para verificar se um user e o owner de uma review
+CREATE FUNCTION projeto.fn_IsReviewOwner
+(
+    @userId VARCHAR(20),
+    @reviewId VARCHAR(20)
+)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @isOwner BIT = 0;
+    
+    IF EXISTS (
+        SELECT 1 
+        FROM projeto.review 
+        WHERE id_review = @reviewId 
+        AND id_utilizador = @userId
+    )
+    BEGIN
+        SET @isOwner = 1;
+    END
+    
+    RETURN @isOwner;
+END
+GO
