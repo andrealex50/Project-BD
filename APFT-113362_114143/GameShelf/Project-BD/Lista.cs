@@ -32,7 +32,7 @@ namespace Project_BD
             LoadListData();
             LoadListEntries();
             LoadUserData();
-            listView1.DoubleClick += listView1_DoubleClick;
+            listView1.MouseDoubleClick += listView1_MouseDoubleClick;
         }
 
         private SqlConnection getSGBDConnection()
@@ -579,7 +579,7 @@ namespace Project_BD
         }
 
         //Entradas das listas
-        private void listView1_DoubleClick(object sender, EventArgs e)
+        private void listView1_MouseDoubleClick(object sender, EventArgs e)
         {
             try
             {
@@ -608,5 +608,6 @@ namespace Project_BD
             profileForm.Show();
             this.Hide();
         }
+
     }
 }

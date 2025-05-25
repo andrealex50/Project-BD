@@ -103,7 +103,6 @@
             this.listView1.Size = new System.Drawing.Size(748, 250);
             this.listView1.TabIndex = 21;
             this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.DoubleClick += new System.EventHandler(this.listView1_DoubleClick);
             // 
             // label4
             // 

@@ -218,3 +218,25 @@ BEGIN
     RETURN @isOwner;
 END
 GO
+
+--ReviewPage
+--UDF para gerar um id para uma review
+CREATE FUNCTION projeto.fn_GenerateReviewId()
+RETURNS VARCHAR(20)
+AS
+BEGIN
+    DECLARE @count INT;
+    DECLARE @newId VARCHAR(20);
+    
+    SELECT @count = COUNT(*) + 1 FROM projeto.review;
+    SET @newId = 'R' + RIGHT('000' + CAST(@count AS VARCHAR(3)), 3);
+    
+    WHILE EXISTS (SELECT 1 FROM projeto.review WHERE id_review = @newId)
+    BEGIN
+        SET @count = @count + 1;
+        SET @newId = 'R' + RIGHT('000' + CAST(@count AS VARCHAR(3)), 3);
+    END
+    
+    RETURN @newId;
+END
+GO

@@ -39,32 +39,15 @@ namespace Project_BD
             return cn.State == ConnectionState.Open;
         }
 
-        private string GenerateReviewId()
+        private string GetNewReviewId()
         {
             try
             {
                 using (var tempCn = getSGBDConnection())
                 {
                     tempCn.Open();
-
-                    // Get the maximum existing review ID
-                    string query = "SELECT MAX(id_review) FROM projeto.review";
-                    SqlCommand cmd = new SqlCommand(query, tempCn);
-                    object result = cmd.ExecuteScalar();
-
-                    if (result == DBNull.Value || result == null)
-                    {
-                        return "R001"; // First review
-                    }
-
-                    string maxId = result.ToString();
-                    if (maxId.StartsWith("R") && int.TryParse(maxId.Substring(1), out int number))
-                    {
-                        return $"R{(number + 1):D3}"; // Increment and format
-                    }
-
-                    // Fallback if ID format is unexpected
-                    return "R" + Guid.NewGuid().ToString("N").Substring(0, 3);
+                    SqlCommand cmd = new SqlCommand("SELECT projeto.fn_GenerateReviewId()", tempCn);
+                    return cmd.ExecuteScalar().ToString();
                 }
             }
             catch (Exception ex)
@@ -82,15 +65,17 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = "SELECT titulo FROM projeto.jogo WHERE id_jogo = @gameId";
-                SqlCommand command = new SqlCommand(query, cn);
+                // Use the stored procedure
+                SqlCommand command = new SqlCommand("projeto.sp_GetGameDetails", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@gameId", gameId);
 
-                object result = command.ExecuteScalar();
-                if (result != null)
+                SqlDataReader reader = command.ExecuteReader();
+                if (reader.Read())
                 {
-                    lblGameTitle.Text = result.ToString();
+                    lblGameTitle.Text = reader["titulo"].ToString();
                 }
+                reader.Close();
             }
             catch (Exception ex)
             {
@@ -110,11 +95,9 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT id_review, horas_jogadas, rating, descricao_review 
-                               FROM projeto.review 
-                               WHERE id_utilizador = @userId AND id_jogo = @gameId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                // Use the stored procedure
+                SqlCommand command = new SqlCommand("projeto.sp_CheckUserGameReview", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", currentUserId);
                 command.Parameters.AddWithValue("@gameId", gameId);
 
@@ -139,6 +122,54 @@ namespace Project_BD
             }
         }
 
+        private bool CheckReviewExists()
+        {
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) FROM projeto.review WHERE id_utilizador = @userId AND id_jogo = @gameId", cn))
+            {
+                cmd.Parameters.AddWithValue("@userId", currentUserId);
+                cmd.Parameters.AddWithValue("@gameId", gameId);
+                return (int)cmd.ExecuteScalar() > 0;
+            }
+        }
+
+
+        private void UpdateExistingReview()
+        {
+            // First get the existing review ID
+            string existingReviewId = GetExistingReviewId();
+
+            if (string.IsNullOrEmpty(existingReviewId))
+            {
+                MessageBox.Show("Could not find existing review to update");
+                return;
+            }
+
+            using (SqlCommand cmd = new SqlCommand("projeto.sp_UpdateReview", cn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@reviewId", existingReviewId); // Add this line
+                cmd.Parameters.AddWithValue("@hours", numHoursPlayed.Value);
+                cmd.Parameters.AddWithValue("@rating", numRating.Value);
+                cmd.Parameters.AddWithValue("@review", txtReview.Text);
+                cmd.Parameters.AddWithValue("@userId", currentUserId);
+                cmd.Parameters.AddWithValue("@gameId", gameId);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private string GetExistingReviewId()
+        {
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT id_review FROM projeto.review WHERE id_utilizador = @userId AND id_jogo = @gameId", cn))
+            {
+                cmd.Parameters.AddWithValue("@userId", currentUserId);
+                cmd.Parameters.AddWithValue("@gameId", gameId);
+                object result = cmd.ExecuteScalar();
+                return result?.ToString();
+            }
+        }
+
         private void btnSubmit_Click(object sender, EventArgs e)
         {
             if (numRating.Value == 0)
@@ -149,105 +180,57 @@ namespace Project_BD
 
             try
             {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
-
-                // Check if review already exists
-                string checkQuery = "SELECT COUNT(*) FROM projeto.review WHERE id_utilizador = @userId AND id_jogo = @gameId";
-                SqlCommand checkCmd = new SqlCommand(checkQuery, cn);
-                checkCmd.Parameters.AddWithValue("@userId", currentUserId);
-                checkCmd.Parameters.AddWithValue("@gameId", gameId);
-                int reviewCount = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                string query;
-                if (reviewCount > 0)
+                using (cn = getSGBDConnection())
                 {
-                    // Update existing review
-                    query = @"UPDATE projeto.review 
-                            SET horas_jogadas = @hours, rating = @rating, 
-                                descricao_review = @review, data_review = GETDATE()
-                            WHERE id_utilizador = @userId AND id_jogo = @gameId";
-                }
-                else
-                {
-                    // Insert new review
-                    query = @"INSERT INTO projeto.review 
-                            (id_review, horas_jogadas, rating, descricao_review, 
-                             data_review, id_utilizador, id_jogo)
-                            VALUES 
-                            (@id_review, @hours, @rating, @review, GETDATE(), @userId, @gameId)";
-                    reviewId = GenerateReviewId();
-                }
+                    if (!verifySGBDConnection())
+                        return;
 
-                SqlCommand command = new SqlCommand(query, cn);
-                if (reviewCount == 0)
-                {
-                    command.Parameters.AddWithValue("@id_review", reviewId);
-                }
-                command.Parameters.AddWithValue("@hours", numHoursPlayed.Value);
-                command.Parameters.AddWithValue("@rating", numRating.Value);
-                command.Parameters.AddWithValue("@review", txtReview.Text);
-                command.Parameters.AddWithValue("@userId", currentUserId);
-                command.Parameters.AddWithValue("@gameId", gameId);
+                    // Check if review exists
+                    bool reviewExists = CheckReviewExists();
 
-                int rowsAffected = command.ExecuteNonQuery();
+                    if (reviewExists)
+                    {
+                        UpdateExistingReview();
+                    }
+                    else
+                    {
+                        CreateNewReview();
+                    }
 
-                if (rowsAffected > 0)
-                {
                     MessageBox.Show("Review submitted successfully!");
                     this.Close();
+                    GamePage gamePage = new GamePage(currentUserId, gameId);
+                    gamePage.Show();
                 }
-                else
-                {
-                    MessageBox.Show("Failed to submit review");
-                }
-
-                // Update game's average rating
-                UpdateGameRating();
+            }
+            catch (SqlException sqlEx)
+            {
+                MessageBox.Show($"Database error: {sqlEx.Message}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error submitting review: " + ex.Message);
-            }
-            finally
-            {
-                cn?.Close();
-                GamePage gamePage = new GamePage(currentUserId, gameId);
-                gamePage.Show();
-
+                MessageBox.Show($"Error: {ex.Message}");
             }
         }
 
-        private void UpdateGameRating()
+
+        private void CreateNewReview()
         {
-            try
-            {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
+            reviewId = GetNewReviewId();
 
-                string query = @"UPDATE projeto.jogo 
-                               SET rating_medio = (
-                                   SELECT AVG(rating) 
-                                   FROM projeto.review 
-                                   WHERE id_jogo = @gameId
-                               )
-                               WHERE id_jogo = @gameId";
-
-                SqlCommand command = new SqlCommand(query, cn);
-                command.Parameters.AddWithValue("@gameId", gameId);
-                command.ExecuteNonQuery();
-            }
-            catch (Exception ex)
+            using (SqlCommand cmd = new SqlCommand("projeto.sp_CreateReview", cn))
             {
-                MessageBox.Show("Error updating game rating: " + ex.Message);
-            }
-            finally
-            {
-                cn?.Close();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@reviewId", reviewId);
+                cmd.Parameters.AddWithValue("@hours", numHoursPlayed.Value);
+                cmd.Parameters.AddWithValue("@rating", numRating.Value);
+                cmd.Parameters.AddWithValue("@review", txtReview.Text);
+                cmd.Parameters.AddWithValue("@userId", currentUserId);
+                cmd.Parameters.AddWithValue("@gameId", gameId);
+                cmd.ExecuteNonQuery();
             }
         }
+
 
         private void btnCancel_Click(object sender, EventArgs e)
         {

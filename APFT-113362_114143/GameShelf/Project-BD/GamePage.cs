@@ -272,7 +272,6 @@ namespace Project_BD
 
                 // Reload reviews (and button text if needed)
                 LoadReviews(comboBox1.SelectedItem?.ToString() ?? "All");
-                RefreshGameRating();
 
                 // Also re-check and update the review button text
                 if (CanUserReview())
@@ -368,37 +367,6 @@ namespace Project_BD
             string filter = comboBox1.SelectedItem.ToString();
             LoadReviews(filter);
         }
-        // Helper function para dar update so ao rating quando se elimina uma review
-        private void RefreshGameRating()
-        {
-            try
-            {
-                cn = getSGBDConnection();
-                if (!verifySGBDConnection())
-                    return;
-
-                string query = @"SELECT rating_medio FROM projeto.jogo WHERE id_jogo = @gameId";
-                SqlCommand cmd = new SqlCommand(query, cn);
-                cmd.Parameters.AddWithValue("@gameId", gameId);
-
-                object result = cmd.ExecuteScalar();
-                panel6.Controls.Clear();
-                panel6.Controls.Add(new Label()
-                {
-                    Text = result?.ToString() ?? "0",
-                    AutoSize = true
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error refreshing rating: " + ex.Message);
-            }
-            finally
-            {
-                cn?.Close();
-            }
-        }
-
 
     }
 }

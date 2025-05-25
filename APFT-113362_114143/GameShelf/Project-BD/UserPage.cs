@@ -37,6 +37,7 @@ namespace Project_BD
             // Only show add friend button if viewing someone else's profile
             button3.Visible = (currentUserId != profileUserId);
             listView1.MouseDoubleClick += listView1_MouseDoubleClick;
+            listView4.MouseDoubleClick += listView4_MouseDoubleClick;
         }
 
         private SqlConnection getSGBDConnection()
@@ -345,41 +346,41 @@ namespace Project_BD
                     // Best reviewed game
                     if (reader.Read())
                     {
+                        panel6.Controls.Clear();
                         Label bestReviewedLabel = new Label();
                         bestReviewedLabel.Text = reader["best_reviewed_game"]?.ToString() ?? "None";
                         bestReviewedLabel.AutoSize = true;
-                        panel6.Controls.Clear();
                         panel6.Controls.Add(bestReviewedLabel);
                     }
 
                     // Most played game
                     if (reader.NextResult() && reader.Read())
                     {
+                        panel7.Controls.Clear();
                         Label mostPlayedLabel = new Label();
                         mostPlayedLabel.Text = reader["most_played_game"]?.ToString() ?? "None";
                         mostPlayedLabel.AutoSize = true;
-                        panel7.Controls.Clear();
                         panel7.Controls.Add(mostPlayedLabel);
                     }
 
                     // Most reviewed genre
                     if (reader.NextResult() && reader.Read())
                     {
+                        panel8.Controls.Clear();
                         Label mostReviewedGenreLabel = new Label();
                         mostReviewedGenreLabel.Text = reader["most_reviewed_genre"]?.ToString() ?? "None";
                         mostReviewedGenreLabel.AutoSize = true;
-                        panel8.Controls.Clear();
                         panel8.Controls.Add(mostReviewedGenreLabel);
                     }
 
                     // Average review score
                     if (reader.NextResult() && reader.Read())
                     {
+                        panel9.Controls.Clear();
                         Label avgScoreLabel = new Label();
                         avgScoreLabel.Text = reader["avg_rating"] != DBNull.Value ?
                             Math.Round(Convert.ToDouble(reader["avg_rating"]), 2).ToString() : "None";
                         avgScoreLabel.AutoSize = true;
-                        panel9.Controls.Clear();
                         panel9.Controls.Add(avgScoreLabel);
                     }
                 }
@@ -390,7 +391,8 @@ namespace Project_BD
             }
             finally
             {
-                cn.Close();
+                if (cn != null && cn.State == ConnectionState.Open)
+                    cn.Close();
             }
         }
 
@@ -450,7 +452,10 @@ namespace Project_BD
                 string reviewId = listView1.SelectedItems[0].Tag.ToString();
                 ReviewDetails reviewDetails = new ReviewDetails(currentUserId, reviewId);
                 reviewDetails.ShowDialog();
+
                 LoadUserReviews();
+                LoadUserStatistics();
+                LoadReviewReactions();
             }
         }
 
@@ -511,7 +516,7 @@ namespace Project_BD
 
 
         // Show reactions to other reviews
-        private void listView4_SelectedIndexChanged(object sender, EventArgs e)
+        private void listView4_MouseDoubleClick(object sender, EventArgs e)
         {
             if (listView4.SelectedItems.Count == 0)
                 return;
@@ -528,8 +533,9 @@ namespace Project_BD
             ReviewDetails reviewDetailsForm = new ReviewDetails(currentUserId, reactedReviewId);
             reviewDetailsForm.ShowDialog();
 
-            LoadReviewReactions();
             LoadUserReviews();
+            LoadUserStatistics();
+            LoadReviewReactions();
         }
 
 

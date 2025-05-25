@@ -221,7 +221,6 @@
             this.listView4.Size = new System.Drawing.Size(332, 221);
             this.listView4.TabIndex = 44;
             this.listView4.UseCompatibleStateImageBehavior = false;
-            this.listView4.SelectedIndexChanged += new System.EventHandler(this.listView4_SelectedIndexChanged);
             // 
             // label1
             // 

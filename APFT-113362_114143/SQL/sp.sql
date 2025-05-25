@@ -446,7 +446,7 @@ BEGIN
 END
 GO
 
---SP para registas um novo user
+--SP para registar um novo user
 CREATE PROCEDURE projeto.sp_RegisterUser
     @Id VARCHAR(20),
     @Name VARCHAR(50),
@@ -623,7 +623,7 @@ BEGIN
 END
 GO
 
--- Get user statistics
+-- Recolher statisticas do user
 CREATE PROCEDURE projeto.sp_GetUserGameStats
     @userId VARCHAR(20)
 AS
@@ -655,5 +655,45 @@ BEGIN
     SELECT AVG(CAST(rating AS FLOAT)) AS avg_rating
     FROM projeto.review
     WHERE id_utilizador = @userId;
+END
+GO
+
+--ReviewPage
+--SP para criar reviews
+CREATE PROCEDURE projeto.sp_CreateReview
+    @reviewId VARCHAR(20),
+    @hours DECIMAL(6,2),
+    @rating INT,
+    @review VARCHAR(200),
+    @userId VARCHAR(20),
+    @gameId VARCHAR(20)
+AS
+BEGIN
+    INSERT INTO projeto.review 
+    (id_review, horas_jogadas, rating, descricao_review, 
+     data_review, id_utilizador, id_jogo)
+    VALUES 
+    (@reviewId, @hours, @rating, @review, GETDATE(), @userId, @gameId);
+END
+GO
+
+--SP para dar update a reviews
+CREATE PROCEDURE projeto.sp_UpdateReview
+    @reviewId VARCHAR(20),
+    @hours DECIMAL(6,2),
+    @rating INT,
+    @review VARCHAR(200),
+    @userId VARCHAR(20),
+    @gameId VARCHAR(20)
+AS
+BEGIN
+    UPDATE projeto.review 
+    SET horas_jogadas = @hours, 
+        rating = @rating, 
+        descricao_review = @review, 
+        data_review = GETDATE()
+    WHERE id_review = @reviewId 
+    AND id_utilizador = @userId 
+    AND id_jogo = @gameId;
 END
 GO
