@@ -210,6 +210,7 @@ namespace Project_BD
                 SqlCommand command = new SqlCommand("projeto.sp_GetUserLists", cn);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", profileUserId);
+                command.Parameters.AddWithValue("@currentUserId", currentUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
 

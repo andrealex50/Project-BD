@@ -571,20 +571,37 @@ GO
 
 -- SP para recolher listas com info basica
 CREATE PROCEDURE projeto.sp_GetUserLists
-    @userId VARCHAR(20)
+    @userId VARCHAR(20),
+    @currentUserId VARCHAR(20) = NULL -- Add this parameter
 AS
 BEGIN
-    SELECT 
-        id_lista, 
-        titulo_lista, 
-        descricao_lista,
-        visibilidade_lista,
-        usa_posicoes
-    FROM projeto.lista
-    WHERE id_utilizador = @userId
-    ORDER BY titulo_lista;
+    -- If current user is viewing their own profile, show all lists
+    IF @currentUserId = @userId
+    BEGIN
+        SELECT 
+            id_lista, 
+            titulo_lista, 
+            descricao_lista,
+            visibilidade_lista,
+            usa_posicoes
+        FROM projeto.lista
+        WHERE id_utilizador = @userId
+        ORDER BY titulo_lista;
+    END
+    ELSE -- Otherwise only show public lists
+    BEGIN
+        SELECT 
+            id_lista, 
+            titulo_lista, 
+            descricao_lista,
+            visibilidade_lista,
+            usa_posicoes
+        FROM projeto.lista
+        WHERE id_utilizador = @userId
+        AND visibilidade_lista = 'Publica'
+        ORDER BY titulo_lista;
+    END
 END
-GO
 
 -- Recolher amigos do user
 CREATE PROCEDURE projeto.sp_GetUserFollowing
@@ -624,26 +641,30 @@ END
 GO
 
 -- Recolher statisticas do user
+
 CREATE PROCEDURE projeto.sp_GetUserGameStats
     @userId VARCHAR(20)
 AS
 BEGIN
-    -- Best reviewed game
-    SELECT TOP 1 j.titulo AS best_reviewed_game
+    -- Best reviewed game (with fallback for no reviews)
+    SELECT TOP 1 
+        ISNULL(j.titulo, 'No games reviewed') AS best_reviewed_game
     FROM projeto.review r
     JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
     WHERE r.id_utilizador = @userId
     ORDER BY r.rating DESC;
     
-    -- Most played game
-    SELECT TOP 1 j.titulo AS most_played_game
+    -- Most played game (with fallback for no playtime data)
+    SELECT TOP 1 
+        ISNULL(j.titulo, 'No playtime data') AS most_played_game
     FROM projeto.review r
     JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
-    WHERE r.id_utilizador = @userId
+    WHERE r.id_utilizador = @userId AND r.horas_jogadas > 0
     ORDER BY r.horas_jogadas DESC;
     
-    -- Most reviewed genre
-    SELECT TOP 1 g.nome AS most_reviewed_genre
+    -- Most reviewed genre (with fallback for no genres)
+    SELECT TOP 1 
+        ISNULL(g.nome, 'No genres reviewed') AS most_reviewed_genre
     FROM projeto.review r
     JOIN projeto.jogo j ON r.id_jogo = j.id_jogo
     JOIN projeto.genero g ON j.id_jogo = g.id_jogo
@@ -651,8 +672,12 @@ BEGIN
     GROUP BY g.nome
     ORDER BY COUNT(*) DESC;
     
-    -- Average review score
-    SELECT AVG(CAST(rating AS FLOAT)) AS avg_rating
+    -- Average review score (with NULL handling)
+    SELECT 
+        CASE 
+            WHEN COUNT(*) > 0 THEN AVG(CAST(rating AS FLOAT))
+            ELSE NULL 
+        END AS avg_rating
     FROM projeto.review
     WHERE id_utilizador = @userId;
 END
