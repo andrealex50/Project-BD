@@ -300,7 +300,7 @@ BEGIN
 END
 GO
 
--- SP para obter informação sobre o dono da lista
+-- SP para obter informaï¿½ï¿½o sobre o dono da lista
 CREATE PROCEDURE projeto.sp_GetListOwner
     @listId VARCHAR(20)
 AS
@@ -368,7 +368,7 @@ BEGIN
 END
 GO
 
--- SP para verificar se o utilizador já deu review ao jogo
+-- SP para verificar se o utilizador jï¿½ deu review ao jogo
 CREATE PROCEDURE projeto.sp_CheckUserGameReview
     @userId VARCHAR(20),
     @gameId VARCHAR(20)
@@ -387,7 +387,7 @@ GO
 
 -- SP para obter os utilizadores seguidos (amigos)
 CREATE PROCEDURE projeto.sp_GetUserFriends
-    @currentUserId INT
+    @currentUserId VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -407,7 +407,7 @@ GO
 
 -- SP para pesquisar por amigos
 CREATE PROCEDURE projeto.sp_SearchUserFriends
-    @currentUserId INT,
+    @currentUserId VARCHAR(20),
     @searchText NVARCHAR(100)
 AS
 BEGIN
@@ -429,8 +429,8 @@ GO
 
 ---- LIST ----
 CREATE PROCEDURE projeto.sp_GetListDetails
-    @listId INT,
-    @currentUserId INT
+    @listId VARCHAR(20),
+    @currentUserId VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -447,7 +447,7 @@ BEGIN
 END
 GO
 
--- SP para informações basicas do User
+-- SP para informaï¿½ï¿½es basicas do User
 CREATE PROCEDURE projeto.sp_GetUserBasicInfo
     @userId VARCHAR(20)
 AS
@@ -463,7 +463,7 @@ GO
 
 -- SP para obter entradas da lista
 CREATE PROCEDURE projeto.sp_GetListEntries
-    @listId INT,
+    @listId VARCHAR(20),
     @usesPositions BIT
 AS
 BEGIN
@@ -880,7 +880,7 @@ GO
 
 
 ------------------- UDF -----------------------
--- UDF para Calcular Rating Médio de um Jogo
+-- UDF para Calcular Rating Mï¿½dio de um Jogo
 CREATE FUNCTION projeto.fn_CalculateGameRating
 (
     @gameId VARCHAR(20)
@@ -898,7 +898,7 @@ BEGIN
 END
 GO
 
--- UDF para Verificar se Usuário é Amigo
+-- UDF para Verificar se Usuï¿½rio ï¿½ Amigo
 CREATE FUNCTION projeto.fn_IsFriend
 (
     @currentUserId VARCHAR(20),
