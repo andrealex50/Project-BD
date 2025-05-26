@@ -59,16 +59,10 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT l.descricao_lista, l.visibilidade_lista, 
-               l.usa_posicoes,  -- Add this
-               CASE WHEN l.id_utilizador = @currentUserId THEN 1 ELSE 0 END AS is_owner
-               FROM projeto.lista l
-               WHERE l.id_lista = @listId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetListDetails", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@listId", listId);
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
-                
 
                 SqlDataReader reader = command.ExecuteReader();
                 if (reader.Read())
@@ -118,11 +112,8 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = "SELECT u.nome, p.foto FROM projeto.utilizador u " +
-                               "LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador " +
-                               "WHERE u.id_utilizador = @userId";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserBasicInfo", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", currentUserId);
 
                 SqlDataReader reader = command.ExecuteReader();
@@ -160,15 +151,10 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT el.id_item, j.titulo as game_title, j.id_jogo, el.estado, 
-                el.posicao, el.notas_adicionais, j.capa
-                FROM projeto.entrada_lista el
-                JOIN projeto.jogo j ON el.id_jogo = j.id_jogo
-                WHERE el.id_lista = @listId
-                ORDER BY " + (listUsesPositions ? "el.posicao" : "j.titulo");
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetListEntries", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@listId", listId);
+                command.Parameters.AddWithValue("@usesPositions", listUsesPositions);
 
                 SqlDataReader reader = command.ExecuteReader();
 
@@ -299,7 +285,7 @@ namespace Project_BD
         {
             Form popupForm = new Form();
             popupForm.Text = "Add Game to List";
-            popupForm.Size = new Size(600, 400);
+            popupForm.Size = new Size(600, 425);
             popupForm.StartPosition = FormStartPosition.CenterParent;
             popupForm.FormBorderStyle = FormBorderStyle.FixedDialog;
             popupForm.MaximizeBox = false;

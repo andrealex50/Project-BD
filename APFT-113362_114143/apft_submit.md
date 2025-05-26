@@ -43,22 +43,70 @@ Desde a última entrega reparamos que faltava o atributo que permite distinguir 
 
 ## SQL DML - Data Manipulation Language
 
-Uma secção por formulário.
-A section for each form.
+### Página Iniciar Sessão
 
-### Formulario exemplo/Example Form
-
-![Exemplo Screenshot!](screenshots/customer_details_form.jpg "AnImage")
+![menulogin!](screenshots/MenuLogin.png "MenuLogin")
 
 ```sql
--- Show data on the form
-SELECT * FROM MY_TABLE ....;
-
--- Insert new element
-INSERT INTO MY_TABLE ....;
+-- Para Login, comando para autenticar utilizador com base no seu email e password
+SELECT id_utilizador, nome FROM projeto.utilizador WHERE email = @Email AND password = @Password
 ```
 
-...
+
+![mainpage!](screenshots/MainPage.png "MainPage")
+
+```sql
+-- SP para obter as informações basicas do user (nome e foto)
+projeto.sp_GetUserBasicInfo
+
+-- SP para pesquisar entre todos os jogos
+projeto.sp_SearchGames
+
+-- SP para pesquisar pelo utilizador
+projeto.sp_SearchUsers
+
+-- SP para obter os utilizadores seguidos (amigos)
+sp_GetUserFriends
+
+-- Carregar géneros
+SELECT DISTINCT nome FROM projeto.genero
+
+-- Carregar plataformas
+SELECT DISTINCT sigla FROM projeto.plataforma
+
+-- SP para pesquisar por amigos
+projeto.sp_SearchUserFriends
+
+-- SP para Pesquisa de Listas com Filtros Combinados
+projeto.sp_SearchLists
+```
+
+
+![lista!](screenshots/Lista.png "Lista")
+
+```sql
+-- SP para carregar informações da lista
+projeto.sp_GetListDetails
+
+-- SP para obter as informações basicas do user (nome e foto)
+projeto.sp_GetUserBasicInfo
+
+-- SP para obter entradas da lista
+projeto.sp_GetListEntries
+
+-- UDF para verificar se é dono da lista
+SELECT projeto.fn_IsListOwner(@userId, @listId)
+
+-- SP para pesquisar entre todos os jogos
+projeto.sp_SearchGames
+
+-- SP para adicionar jogo a lista
+projeto.sp_AddGameToList
+
+-- SP para obter o dono da lista a partir do listId
+projeto.sp_GetListOwner
+```
+
 
 ## Normalização/Normalization
 

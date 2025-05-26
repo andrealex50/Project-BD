@@ -77,7 +77,7 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                SqlCommand command = new SqlCommand("projeto.sp_GetUserStatistics", cn);
+                SqlCommand command = new SqlCommand("projeto.sp_GetUserBasicInfo", cn);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@userId", currentUserId);
 
@@ -169,16 +169,10 @@ namespace Project_BD
                 command.Parameters.AddWithValue("@excludeFollowed", 1); // Only show users not followed
 
                 SqlDataReader reader = command.ExecuteReader();
-
-                // Get only the friends (is_following = 1)
-                string friendQuery = @"SELECT u.id_utilizador, u.nome 
-                              FROM projeto.utilizador u
-                              JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
-                              WHERE s.id_utilizador_seguidor = @currentUserId";
-
                 reader.Close();
 
-                SqlCommand friendCommand = new SqlCommand(friendQuery, cn);
+                SqlCommand friendCommand = new SqlCommand("projeto.sp_GetUserFriends", cn);
+                friendCommand.CommandType = CommandType.StoredProcedure;
                 friendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
 
                 SqlDataReader friendReader = friendCommand.ExecuteReader();
@@ -399,15 +393,10 @@ namespace Project_BD
                 if (!verifySGBDConnection())
                     return;
 
-                string query = @"SELECT u.id_utilizador, u.nome 
-                        FROM projeto.utilizador u
-                        JOIN projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
-                        WHERE s.id_utilizador_seguidor = @currentUserId
-                        AND u.nome LIKE @searchText";
-
-                SqlCommand command = new SqlCommand(query, cn);
+                SqlCommand command = new SqlCommand("projeto.sp_SearchUserFriends", cn);
+                command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@currentUserId", currentUserId);
-                command.Parameters.AddWithValue("@searchText", "%" + searchText + "%");
+                command.Parameters.AddWithValue("@searchText", searchText);
 
                 SqlDataReader reader = command.ExecuteReader();
 

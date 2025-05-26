@@ -26,6 +26,11 @@ DROP PROCEDURE IF EXISTS projeto.sp_GetUserReviewReactions;
 DROP PROCEDURE IF EXISTS projeto.sp_GetUserGameStats;
 DROP PROCEDURE IF EXISTS projeto.sp_CreateReview;
 DROP PROCEDURE IF EXISTS projeto.sp_UpdateReview;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserFriends;
+DROP PROCEDURE IF EXISTS projeto.sp_SearchUserFriends;
+DROP PROCEDURE IF EXISTS projeto.sp_GetListDetails;
+DROP PROCEDURE IF EXISTS projeto.sp_GetUserBasicInfo;
+DROP PROCEDURE IF EXISTS projeto.sp_GetListEntries;
 
 -- UDF
 DROP FUNCTION IF EXISTS projeto.fn_CalculateGameRating;
@@ -380,6 +385,130 @@ BEGIN
 END
 GO
 
+-- SP para obter os utilizadores seguidos (amigos)
+CREATE PROCEDURE projeto.sp_GetUserFriends
+    @currentUserId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        u.id_utilizador, 
+        u.nome 
+    FROM 
+        projeto.utilizador u
+    JOIN 
+        projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
+    WHERE 
+        s.id_utilizador_seguidor = @currentUserId;
+END
+GO
+
+
+-- SP para pesquisar por amigos
+CREATE PROCEDURE projeto.sp_SearchUserFriends
+    @currentUserId INT,
+    @searchText NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        u.id_utilizador, 
+        u.nome 
+    FROM 
+        projeto.utilizador u
+    JOIN 
+        projeto.segue s ON u.id_utilizador = s.id_utilizador_seguido
+    WHERE 
+        s.id_utilizador_seguidor = @currentUserId
+        AND u.nome LIKE '%' + @searchText + '%';
+END
+GO
+
+
+---- LIST ----
+CREATE PROCEDURE projeto.sp_GetListDetails
+    @listId INT,
+    @currentUserId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT 
+        l.descricao_lista, 
+        l.visibilidade_lista, 
+        l.usa_posicoes,
+        CASE WHEN l.id_utilizador = @currentUserId THEN 1 ELSE 0 END AS is_owner
+    FROM 
+        projeto.lista l
+    WHERE 
+        l.id_lista = @listId;
+END
+GO
+
+-- SP para informações basicas do User
+CREATE PROCEDURE projeto.sp_GetUserBasicInfo
+    @userId VARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        u.nome,
+        p.foto
+    FROM projeto.utilizador u
+    LEFT JOIN projeto.perfil p ON u.id_utilizador = p.utilizador
+    WHERE u.id_utilizador = @userId;
+END
+GO
+
+-- SP para obter entradas da lista
+CREATE PROCEDURE projeto.sp_GetListEntries
+    @listId INT,
+    @usesPositions BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    IF @usesPositions = 1
+    BEGIN
+        SELECT 
+            el.id_item, 
+            j.titulo as game_title, 
+            j.id_jogo, 
+            el.estado, 
+            el.posicao, 
+            el.notas_adicionais, 
+            j.capa
+        FROM 
+            projeto.entrada_lista el
+        JOIN 
+            projeto.jogo j ON el.id_jogo = j.id_jogo
+        WHERE 
+            el.id_lista = @listId
+        ORDER BY 
+            el.posicao;
+    END
+    ELSE
+    BEGIN
+        SELECT 
+            el.id_item, 
+            j.titulo as game_title, 
+            j.id_jogo, 
+            el.estado, 
+            el.posicao, 
+            el.notas_adicionais, 
+            j.capa
+        FROM 
+            projeto.entrada_lista el
+        JOIN 
+            projeto.jogo j ON el.id_jogo = j.id_jogo
+        WHERE 
+            el.id_lista = @listId
+        ORDER BY 
+            j.titulo;
+    END
+END
+GO
 
 ---- GAME PAGE ----
 
