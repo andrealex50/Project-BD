@@ -100,7 +100,21 @@ namespace Project_BD
                         // Load profile picture if exists
                         if (reader["foto"] != DBNull.Value)
                         {
-                            string imagePath = reader["foto"].ToString();
+                            string imageName = reader["foto"].ToString();
+
+                            // Check if it's already a full path (for backward compatibility)
+                            string imagePath;
+                            if (System.IO.Path.IsPathRooted(imageName))
+                            {
+                                imagePath = imageName; // It's already a full path
+                            }
+                            else
+                            {
+                                // Build path to Resources folder
+                                string resourcesFolder = System.IO.Path.Combine(Application.StartupPath, "..", "..", "Resources");
+                                imagePath = System.IO.Path.Combine(System.IO.Path.GetFullPath(resourcesFolder), imageName);
+                            }
+
                             if (System.IO.File.Exists(imagePath))
                             {
                                 pictureBox4.Image = Image.FromFile(imagePath);
@@ -108,6 +122,8 @@ namespace Project_BD
                             else
                             {
                                 pictureBox4.Image = null;
+                                // Optional: Show debug message
+                                // MessageBox.Show($"Profile image not found at: {imagePath}");
                             }
                         }
                         else
@@ -414,24 +430,48 @@ namespace Project_BD
                 openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    pictureBox4.Image = Image.FromFile(openFileDialog.FileName);
-
-                    // Update photo in database
                     try
                     {
+                        // Get the selected file info
+                        string selectedFilePath = openFileDialog.FileName;
+                        string fileExtension = System.IO.Path.GetExtension(selectedFilePath);
+
+                        // Create Resources folder if it doesn't exist
+                        string resourcesFolder = System.IO.Path.Combine(Application.StartupPath, "..", "..", "Resources");
+                        string fullResourcesPath = System.IO.Path.GetFullPath(resourcesFolder);
+
+                        if (!System.IO.Directory.Exists(fullResourcesPath))
+                        {
+                            System.IO.Directory.CreateDirectory(fullResourcesPath);
+                        }
+
+                        // Create a unique filename using user ID
+                        string newFileName = $"user_{currentUserId}{fileExtension}";
+                        string destinationPath = System.IO.Path.Combine(fullResourcesPath, newFileName);
+
+                        // Copy the file to Resources folder
+                        System.IO.File.Copy(selectedFilePath, destinationPath, true); // true = overwrite if exists
+
+                        // Update the PictureBox with the new image
+                        pictureBox4.Image?.Dispose(); // Dispose old image to free memory
+                        pictureBox4.Image = Image.FromFile(destinationPath);
+
+                        // Update database with just the filename (not full path)
                         cn = getSGBDConnection();
                         if (!verifySGBDConnection())
                             return;
 
                         string updateQuery = @"IF EXISTS (SELECT 1 FROM projeto.perfil WHERE utilizador = @userId)
-                                            UPDATE projeto.perfil SET foto = @photo WHERE utilizador = @userId
-                                            ELSE
-                                            INSERT INTO projeto.perfil (foto, utilizador) VALUES (@photo, @userId)";
+                                    UPDATE projeto.perfil SET foto = @photo WHERE utilizador = @userId
+                                    ELSE
+                                    INSERT INTO projeto.perfil (foto, utilizador) VALUES (@photo, @userId)";
 
                         SqlCommand command = new SqlCommand(updateQuery, cn);
                         command.Parameters.AddWithValue("@userId", currentUserId);
-                        command.Parameters.AddWithValue("@photo", openFileDialog.FileName);
+                        command.Parameters.AddWithValue("@photo", newFileName); // Store only filename, not full path
                         command.ExecuteNonQuery();
+
+                        MessageBox.Show("Profile picture updated successfully!");
                     }
                     catch (Exception ex)
                     {
@@ -439,11 +479,13 @@ namespace Project_BD
                     }
                     finally
                     {
-                        cn.Close();
+                        if (cn != null && cn.State == ConnectionState.Open)
+                            cn.Close();
                     }
                 }
             }
         }
+        
 
         // Show Personal reviews
         private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)

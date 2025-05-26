@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace Project_BD
@@ -63,11 +64,17 @@ namespace Project_BD
 
                     if (reader["capa"] != DBNull.Value)
                     {
-                        string imagePath = reader["capa"].ToString();
+                        string imageName = reader["capa"].ToString();
+
+                        // Build path to Resources folder
+                        string resourcesPath = Path.Combine(Application.StartupPath, "..", "..", "Resources", imageName);
+                        string imagePath = Path.GetFullPath(resourcesPath); // Resolve relative path
+
                         if (System.IO.File.Exists(imagePath))
                         {
                             pictureBox4.Image = Image.FromFile(imagePath);
                         }
+
                     }
 
                     panel4.Controls.Clear();
@@ -368,5 +375,9 @@ namespace Project_BD
             LoadReviews(filter);
         }
 
+        private void pictureBox4_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
