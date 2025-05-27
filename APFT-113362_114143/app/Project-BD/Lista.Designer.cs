@@ -101,17 +101,16 @@
             this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
             // 
             // listView1
-            this.listView1 = new System.Windows.Forms.ListView();
             this.listView1.HideSelection = false;
-            this.listView1.FullRowSelect = true; 
-            this.listView1.GridLines = true;    // Add this line (optional)
+            this.listView1.FullRowSelect = true;
+            this.listView1.GridLines = true;
             this.listView1.Location = new System.Drawing.Point(36, 268);
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(1120, 382);
             this.listView1.TabIndex = 21;
             this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.View = System.Windows.Forms.View.Details; 
+            this.listView1.View = System.Windows.Forms.View.Details;
             // 
             // label4
             // 
