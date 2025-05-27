@@ -28,11 +28,12 @@ namespace Project_BD
             this.listId = listId;
             this.listTitle = listTitle;
             this.creatorName = creatorName;
-            Text = listTitle; 
+            Text = listTitle;
             LoadListData();
             LoadListEntries();
             LoadUserData();
-            listView1.MouseDoubleClick += listView1_MouseDoubleClick;
+            listView1.MouseDoubleClick += new MouseEventHandler(listView1_MouseDoubleClick);
+            InitializeContextMenu(); 
         }
 
         private SqlConnection getSGBDConnection()
@@ -190,6 +191,95 @@ namespace Project_BD
             catch (Exception ex)
             {
                 MessageBox.Show("Error loading list entries: " + ex.Message);
+            }
+            finally
+            {
+                cn.Close();
+            }
+        }
+
+        private void InitializeContextMenu()
+        {
+            ContextMenuStrip contextMenu = new ContextMenuStrip();
+            ToolStripMenuItem deleteItem = new ToolStripMenuItem("Delete Entry");
+            deleteItem.Click += DeleteItem_Click;
+            contextMenu.Items.Add(deleteItem);
+            listView1.ContextMenuStrip = contextMenu;
+        }
+
+        private void DeleteItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                try
+                {
+                    cn = getSGBDConnection();
+                    if (!verifySGBDConnection())
+                        return;
+
+                    // Check if current user is the list owner
+                    string query = @"SELECT projeto.fn_IsListOwner(@userId, @listId)";
+                    SqlCommand command = new SqlCommand(query, cn);
+                    command.Parameters.AddWithValue("@userId", currentUserId);
+                    command.Parameters.AddWithValue("@listId", listId);
+
+                    bool isOwner = Convert.ToBoolean(command.ExecuteScalar());
+                    if (!isOwner)
+                    {
+                        MessageBox.Show("Only the list owner can delete entries from this list.");
+                        return;
+                    }
+
+                    // Get the selected item's ID
+                    string entryId = listView1.SelectedItems[0].Text;
+
+                    // Ask for confirmation
+                    DialogResult result = MessageBox.Show("Are you sure you want to delete this entry?",
+                        "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        DeleteListEntry(entryId);
+                        LoadListEntries(); // Refresh the list
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error verifying list ownership: " + ex.Message);
+                }
+                finally
+                {
+                    cn.Close();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select an entry to delete.");
+            }
+        }
+
+        private void DeleteListEntry(string entryId)
+        {
+            try
+            {
+                cn = getSGBDConnection();
+                if (!verifySGBDConnection())
+                    return;
+
+                SqlCommand command = new SqlCommand("projeto.sp_DeleteListEntry", cn);
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@entryId", entryId);
+                command.Parameters.AddWithValue("@listId", listId);
+
+                int rowsAffected = command.ExecuteNonQuery();
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("Entry deleted successfully!");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting entry: " + ex.Message);
             }
             finally
             {
@@ -565,25 +655,35 @@ namespace Project_BD
         }
 
         //Entradas das listas
-        private void listView1_MouseDoubleClick(object sender, EventArgs e)
+        private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             try
             {
-                if (listView1.SelectedItems.Count > 0)
+                // Get the item at the mouse position
+                ListViewHitTestInfo hitTest = listView1.HitTest(e.Location);
+
+                if (hitTest.Item != null)
                 {
-                    string gameId = listView1.SelectedItems[0].SubItems[1].Text;
+                    // Get the game ID from the second column (index 1)
+                    string gameId = hitTest.Item.SubItems[1].Text;
+
                     if (!string.IsNullOrEmpty(gameId))
                     {
                         this.Hide();
-
                         GamePage gamePage = new GamePage(currentUserId, gameId);
                         gamePage.Show();
+                    }
+                    else
+                    {
+                        MessageBox.Show("No game ID found for this entry.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error opening game: " + ex.Message);
+                // Show the error message to help with debugging
+                MessageBox.Show($"Error opening game: {ex.Message}", "Error",
+                               MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

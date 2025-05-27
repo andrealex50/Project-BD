@@ -31,6 +31,7 @@ DROP PROCEDURE IF EXISTS projeto.sp_SearchUserFriends;
 DROP PROCEDURE IF EXISTS projeto.sp_GetListDetails;
 DROP PROCEDURE IF EXISTS projeto.sp_GetUserBasicInfo;
 DROP PROCEDURE IF EXISTS projeto.sp_GetListEntries;
+DROP PROCEDURE IF EXISTS projeto.sp_DeleteListEntry;
 
 -- UDF
 DROP FUNCTION IF EXISTS projeto.fn_CalculateGameRating;
@@ -878,6 +879,31 @@ BEGIN
 END
 GO
 
+-- SP para dar delete de uma entrada de uma lista
+CREATE PROCEDURE projeto.sp_DeleteListEntry
+    @entryId VARCHAR(20),
+    @listId VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        
+        -- Delete the list entry
+        DELETE FROM projeto.entrada_lista 
+        WHERE id_item = @entryId AND id_lista = @listId;
+        
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+            
+        THROW;
+    END CATCH
+END;
+GO
 
 ------------------- UDF -----------------------
 -- UDF para Calcular Rating M�dio de um Jogo
