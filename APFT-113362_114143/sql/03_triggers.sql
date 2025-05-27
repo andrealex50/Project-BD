@@ -29,7 +29,7 @@ END
 GO
 
 
--- Trigger para verificar número máximo de jogos por lista (máximo: 20)
+-- Trigger para verificar numero maximo de jogos por lista (maximo: 20)
 CREATE TRIGGER projeto.tr_VerificarMaximoJogosPorLista
 ON projeto.entrada_lista
 AFTER INSERT
@@ -41,7 +41,7 @@ BEGIN
     DECLARE @id_lista VARCHAR(20);
     DECLARE @MAX_JOGOS_POR_LISTA INT = 20;
     
-    -- Verificar cada lista afetada pela inserção
+    -- Verificar cada lista afetada pela inserï¿½ï¿½o
 	-- CURSOR Funciona como um while com FETCH NEXT
     DECLARE lista_cursor CURSOR FOR
     SELECT DISTINCT id_lista FROM inserted;
@@ -51,7 +51,7 @@ BEGIN
     
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        -- Contar quantos jogos existem na lista após a inserção
+        -- Contar quantos jogos existem na lista apï¿½s a inserï¿½ï¿½o
         SELECT @count_jogos = COUNT(*)
         FROM projeto.entrada_lista
         WHERE id_lista = @id_lista;
@@ -62,7 +62,7 @@ BEGIN
             CLOSE lista_cursor;
             DEALLOCATE lista_cursor;
             
-            RAISERROR('Erro: A lista já contém o número máximo de jogos permitidos (%d). Não é possível adicionar mais jogos.', 
+            RAISERROR('Erro: A lista jï¿½ contï¿½m o nï¿½mero mï¿½ximo de jogos permitidos (%d). Nï¿½o ï¿½ possï¿½vel adicionar mais jogos.', 
                       16, 1, @MAX_JOGOS_POR_LISTA);
             ROLLBACK TRANSACTION;
             RETURN;
