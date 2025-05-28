@@ -377,15 +377,17 @@ Algumas listas são criadas pelo admin, que servem como listas criadas pela apli
 O "name" de um seguidor funciona como um username, e é unico.
 Nos IDs usamos um conjunto de caracteres, inicialmente definido como varchar(20) no ddl, então na implementação decidimos gerar um ID como se fosse uma string.
 
+Na página do perfil, na aba "Review Reactions" apenas aparecem reações às reviews feitas pelo utilizador.
+
 ### Dados iniciais da dabase de dados/Database init data
 
 [SQL DB Init File](sql/04_db_init "SQLFileQuestion")
 
 ### Apresentação
 
-[Slides](slides.pdf "Slides")
+[Slides](Apresentação_BD_113362_114143.pdf "Slides")
 
-[Video](https://elearning.ua.pt/pluginfile.php/55992/mod_label/intro/VideoTrabalho2013.mp4)
+[Video](demonstração.mp4)
 
 
 
