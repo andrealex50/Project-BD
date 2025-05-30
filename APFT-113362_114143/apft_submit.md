@@ -122,6 +122,9 @@ projeto.sp_AddGameToList
 
 -- SP para obter o dono da lista a partir do listId
 projeto.sp_GetListOwner
+
+-- SP para eliminar uma entrada da lista
+projeto.sp_DeleteListEntry;
 ```
 
 ### Página Utilizador
@@ -144,7 +147,7 @@ projeto.sp_GetUserLists
 -- SP para obter amigos (followers) do user
 projeto.sp_GetUserFollowing
 
--- SP para obter reações a reviews
+-- SP para obter reações a reviews feitas pelo user
 projeto.sp_GetUserReviewReactions
 
 -- SP para obter/calcular estatisticas do user
@@ -156,7 +159,7 @@ UPDATE projeto.perfil SET foto = @photo WHERE utilizador = @userId
 ELSE
 INSERT INTO projeto.perfil (foto, utilizador) VALUES (@photo, @userId)
 
--- SP para obter informacao sobre o dono da lista
+-- SP para obter informação sobre o dono da lista
 projeto.sp_GetListOwner
 
 -- Comando para adicionar amigo caso ainda não for amigo
